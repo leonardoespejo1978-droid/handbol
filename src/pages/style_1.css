@@ -1,0 +1,91 @@
+/* ===== Variables para posicionamiento de botones ===== */
+:root {
+  --buttons-top: 50px;
+  --buttons-left: 40px;
+}
+
+/* ===== Animación tipo barrido desde la izquierda ===== */
+@keyframes slideInMenu {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(10px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.home {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+
+  background: url('/fondo.jpg') center center / cover no-repeat;
+}
+.home-center-text {
+  position: absolute;
+  top: 60px;          /* 👈 control TOTAL desde aquí */
+  left: 50%;
+  transform: translateX(-50%);
+
+  text-align: center;
+  max-width: 1000px;
+  width: 100%;
+  padding: 20px;
+}
+
+
+
+/* ===== Contenedor de botones ===== */
+.bottom-buttons {
+  position: absolute;
+  top: var(--buttons-top);
+  left: var(--buttons-left);
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start;
+  gap: 20px;
+
+  animation: slideInMenu 0.8s ease-out forwards;
+}
+
+
+/* ===== Estilo de los botones ===== */
+.bottom-buttons button {
+  width: 240px;
+  height: 65px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  padding: 0;
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  background: linear-gradient(145deg, #A50044, #7A0033);
+  color: white;
+  border-radius: 14px;
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.6),
+    inset 0 2px 4px rgba(255,255,255,0.3);
+
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* ===== Hover profesional ===== */
+.bottom-buttons button:hover {
+  transform: translateX(8px);
+  box-shadow:
+    0 15px 35px rgba(0,0,0,0.8),
+    inset 0 2px 6px rgba(255,255,255,0.4);
+}

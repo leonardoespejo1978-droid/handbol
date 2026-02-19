@@ -1,0 +1,191 @@
+/* ===== Reset básico ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #FFFFFF;
+}
+
+body {
+  margin: 0;
+}
+
+/* ===== Botones globales ===== */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+p {
+  margin-top: 5px;
+}
+/* ===== poscion del contenedor del Login ===== */
+.login-container {
+  position: absolute;
+  top: 0px;
+  right: 12px;
+
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  padding: 25px;
+
+  background-color: rgba(165, 0, 68, 0.9); /* rojo con transparencia */
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+
+.login-input {
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #fff; /* texto que escribes */
+  background-color: #5A0D3D; /* un rojo más oscuro para contraste */
+}
+
+.login-input::placeholder {
+  color: #FFD700; /* dorado placeholder */
+  opacity: 1;
+}
+.home {
+  position: relative; /* IMPORTANTE */
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: url('/fondo.jpg') center center / cover no-repeat;
+}
+
+.home-center-text {
+  text-align: center;
+  max-width: 900px;
+  padding: 20px;
+}
+
+.home-center-text h1 {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: white;
+
+  text-shadow:
+    2px 2px 0px #000,
+    4px 4px 15px rgba(0,0,0,0.8);
+
+  margin-bottom: 20px;
+}
+
+.home-center-text h2 {
+  font-size: 22px;
+  font-weight: 400;
+  color: white;
+
+  text-shadow:
+    1px 1px 0px #000,
+    3px 3px 10px rgba(0,0,0,0.7);
+}
+
+
+.login-input:focus {
+  box-shadow: 0 0 6px #FFFFFF;
+}
+
+.login-button {
+  background-color: #004D98;
+  color: #FFFFFF;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.login-button:hover {
+  background-color: #0066C0;
+}
+
+.login-error {
+  margin-top: 10px;
+  color: #FFD700; /* Dorado para error / aviso */
+  font-weight: bold;
+  text-align: center;
+}
+
+.bottom-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.bottom-buttons button {
+  padding: 12px 25px;
+  background-color: #A50044;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.bottom-buttons button:hover {
+  background-color: #B20050;
+  transform: translateY(-2px);
+}
+
+/* ===== Galería y Videos ===== */
+.galeria, .videos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+  background-color: #004D98;
+}
+
+.galeria img, .videos video {
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease;
+}
+
+.galeria img:hover, .videos video:hover {
+  transform: scale(1.05);
+}
+
+/* ===== AdminPanel ===== */
+.admin-panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.admin-panel button {
+  margin-bottom: 10px;
+  padding: 10px 20px;
+  background-color: #A50044;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.admin-panel button:hover {
+  background-color: #B20050;
+}
