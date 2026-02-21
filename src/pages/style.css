@@ -15,22 +15,20 @@
 
 .button-container {
   display: grid;
-  grid-template-rows: repeat(3, auto); /* 3 filas por columna */
+  grid-template-rows: repeat(3, auto);
   grid-auto-flow: column;
-  gap: 20px 30px;   /* gap entre botones axh */
-
-  justify-content: start;   /* ⚡ alineado al margen izquierdo */
-  padding-left: 20px;       /* opcional: espacio desde el borde izquierdo */
+  gap: 20px 30px;
+  justify-content: start;
+  padding-left: 20px;
   margin-top: 24px;
 }
-.pro-background h1 {
-  font-size: 2.6rem;                /* tamaño grande */
-  font-weight: 800;               /* más presencia */
-  text-transform: uppercase;      /* estilo más profesional */
-  letter-spacing: 20px;            /* separación elegante */
-  margin-bottom: 1px;
 
-  /* Color dorado elegante */
+.pro-background h1 {
+  font-size: 2.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 20px;
+  margin-bottom: 1px;
   background: linear-gradient(
     180deg,
     #ffd700 0%,
@@ -39,13 +37,9 @@
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-
-  /* Sombra sutil para profundidad */
   text-shadow: 
     0 2px 6px rgba(0,0,0,0.6),
     0 0 10px rgba(255,215,0,0.3);
-
-  /* Línea decorativa inferior */
   position: relative;
   display: inline-block;
 }
@@ -60,11 +54,9 @@
   border-radius: 2px;
 }
 
-
-/* Botones cuadrados parametrizables */
 .image-card {
-  width: 160px;   /* ⚡ controla el ancho aquí */
-  height: 160px;  /* ⚡ controla el alto aquí */
+  width: 160px;
+  height: 160px;
   border-radius: 18px;
   overflow: hidden;
   cursor: pointer;
@@ -94,71 +86,37 @@
   text-align: center;
   text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
 }
-/* ===== BOTÓN ENRERE PROFESIONAL ===== */
-/* ===== BOTÓN ENRRERE PREMIUM ===== */
-
-@keyframes backButtonEntry {
-  0% {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes floatingEffect {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes arrowMove {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-6px); }
-  100% { transform: translateX(0); }
-}
 
 .back-button {
   position: fixed;
   bottom: 40px;
   right: 40px;
-
   width: 120px;
   height: 70px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   background: linear-gradient(145deg, #008cff, #0047ab);
   color: white;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 1px;
-
   border: none;
   border-radius: 18px;
-
   box-shadow:
     0 10px 25px rgba(0,0,0,0.7),
     0 0 15px rgba(0,140,255,0.4),
     inset 0 2px 6px rgba(255,255,255,0.3);
-
   cursor: pointer;
   z-index: 1000;
-
   animation:
     backButtonEntry 0.6s ease-out,
     floatingEffect 3s ease-in-out infinite;
-
   transition: all 0.3s ease;
 }
 
-/* Hover profesional */
 .back-button:hover {
   transform: translateY(-8px) scale(1.05);
   box-shadow:
@@ -167,8 +125,58 @@
     inset 0 3px 8px rgba(255,255,255,0.4);
 }
 
-/* Flecha animada */
 .back-button .arrow {
   font-size: 26px;
   animation: arrowMove 1.5s infinite;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .pro-background {
+    padding: 20px;
+  }
+
+  .pro-background {
+    padding: 20px 10px;
+  }
+
+  .button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+}
+
+  .image-card {
+    width: 90%;
+    max-width: 250px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .overlay {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .back-button {
+    width: 100px;
+    height: 60px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 16px;
+  }
+.back-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+@media (min-width: 769px) {
+  .button-container .image-card {
+    width: 160px;
+    height: 160px;
+  }
+}
 }
