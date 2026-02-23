@@ -7,7 +7,7 @@ export default function Videos() {
 
   const botones = [
     { image: "/assets/Jornada_1.jpg", text: "Jornada 1", url: "https://next.nubeespesan.duckdns.org/s/SJcW7LYRkyD8wfk" },
-    { image: "/assets/Jornada_2.jpg", text: "Jornada 2", url: "" },
+    { image: "/assets/Jornada_2.jpg", text: "Jornada 2", url: "https://next.nubeespesan.duckdns.org/s/BrzsgYBRJtdpMRJ" },
     { image: "/assets/Jornada_3.jpg", text: "Jornada 3", url: "https://next.nubeespesan.duckdns.org/s/DsyZziiTMcf63mC" },
     { image: "/assets/Jornada_4.jpg", text: "Jornada 4", url: "https://next.nubeespesan.duckdns.org/s/xtFrWEP5sGgXrJm" },
     { image: "/assets/Jornada_5.jpg", text: "Jornada 5", url: "https://next.nubeespesan.duckdns.org/s/CepnAibnXnXGbXg" },
