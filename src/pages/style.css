@@ -1,6 +1,6 @@
 .pro-background {
   min-height: 100vh;
-  padding: 40px;
+  padding: 20px;
   color: white;
   text-align: center;
   background: linear-gradient(
@@ -17,10 +17,10 @@
   display: grid;
   grid-template-rows: repeat(3, auto);
   grid-auto-flow: column;
-  gap: 20px 30px;
+  gap: 25px 30px;
   justify-content: start;
   padding-left: 20px;
-  margin-top: 24px;
+  margin-top: 40px;
 }
 
 .pro-background h1 {
@@ -82,9 +82,10 @@
   background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
   color: white;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 18px;
   text-align: center;
   text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+  white-space: pre-line;
 }
 
 .back-button {
@@ -158,6 +159,30 @@
     height: auto;
     aspect-ratio: 1 / 1;
   }
+.excel-container {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.excel-container table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.excel-container td,
+.excel-container th {
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.excel-container tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
 
   .overlay {
     font-size: 14px;

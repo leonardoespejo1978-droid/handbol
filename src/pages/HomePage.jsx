@@ -46,6 +46,9 @@ export default function HomePage({ session }) {
           >
             Resultats i classificació
           </button>
+	  <button onClick={() => navigate("/Estadistica")}>
+            Estadistica
+          </button>
 
           {role === "admin" && (
             <button onClick={() => navigate("/admin")}>

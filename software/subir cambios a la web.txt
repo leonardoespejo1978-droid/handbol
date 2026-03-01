@@ -1,0 +1,3 @@
+C:\handbol-frontend>git add .
+C:\handbol-frontend>git commit -m "subido partido 2"
+C:\handbol-frontend>push
