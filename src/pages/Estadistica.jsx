@@ -18,6 +18,11 @@ const COLORS = ["#e63946","#457b9d","#2a9d8f","#e9c46a","#f4a261","#a8dadc"];
 
 const sum = (arr, key) => arr.reduce((a, r) => a + (r[key] || 0), 0);
 
+// Noms dels porters (en minúscules per comparació)
+const PORTEROS_NAMES = new Set(["eudald", "jules", "jan"]);
+const getPosicion = (jugador) =>
+  jugador && PORTEROS_NAMES.has(String(jugador).toLowerCase()) ? "PORTERO" : "JUGADOR";
+
 // ─── Hook: detectar si es móvil ───────────────────────────────────────────────
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
@@ -44,6 +49,11 @@ export default function Estadistica() {
   const [ordenarPer, setOrdenarPer] = useState("Goles");
   const [ordenDesc, setOrdenDesc] = useState(true);
   const [vistaMedia, setVistaMedia] = useState(false);
+  const [filtreGraficPorter, setFiltreGraficPorter] = useState("Parades/Lançaments");
+  const [grafEvoCamp, setGrafEvoCamp] = useState("Gols/Lançaments");
+  const [grafEvoMode, setGrafEvoMode] = useState("partit"); // "partit" | "acumulat"
+  const [grafEvoTipus, setGrafEvoTipus] = useState("barres"); // "barres" | "linies"
+
 
   useEffect(() => {
     const load = async () => {
@@ -56,10 +66,15 @@ export default function Estadistica() {
         const ws = wb.Sheets["Datos"];
         if (!ws) throw new Error('Full "Datos" no trobat');
         const json = XLSX.utils.sheet_to_json(ws, { defval: null });
-        setRawData(json.map(r => ({
-          ...r,
-          "% lanz": r["% lanz"] != null ? Math.round(r["% lanz"] * 100) : null,
-        })));
+        setRawData(json.map(r => {
+          const posicion = getPosicion(r.Jugador);
+          let pctLanz = null;
+          if (r["Lanzam."] != null && r["Lanzam."] > 0) {
+            if (posicion === "JUGADOR") pctLanz = Math.round(((r.Goles || 0) / r["Lanzam."]) * 100);
+            else pctLanz = Math.round(((r.Paradas || 0) / r["Lanzam."]) * 100);
+          }
+          return { ...r, POSICION: posicion, "% lanz": pctLanz };
+        }));
       } catch (e) {
         setError(e.message);
       } finally {
@@ -81,9 +96,50 @@ export default function Estadistica() {
   }), [rawData, filtreJornada, filtreRival, filtreJugador]);
 
   const jugadorsFiltered = useMemo(() => filtered.filter(r => r.POSICION === "JUGADOR"), [filtered]);
+  const portersFiltered  = useMemo(() => filtered.filter(r => r.POSICION === "PORTERO"),  [filtered]);
 
   const STAT_FIELDS = ["Goles","Lanzam.","Asistencia","Recup.","Exclusión","Pase","Área","PenaltiProvocado","Exclusión +"];
-  const haJugat = (r) => STAT_FIELDS.some(k => r[k] != null && r[k] !== 0);
+  const PORTER_FIELDS = ["Paradas","Lanzam."];
+  const haJugat = (r) => r.POSICION === "PORTERO"
+    ? PORTER_FIELDS.some(k => r[k] != null && r[k] !== 0)
+    : STAT_FIELDS.some(k => r[k] != null && r[k] !== 0);
+
+  // Stats porteros
+  // Nota: per porters, la columna "Goles" del Excel = parades fetes (igual que "Paradas")
+  //       "Lanzam." = lançaments rebuts, "Asistencia" = assistències reals
+  const statsPerPorter = useMemo(() => {
+    const map = {};
+    portersFiltered.forEach(r => {
+      if (!map[r.Jugador]) map[r.Jugador] = {
+        Jugador: r.Jugador, partits: 0, partitsJugats: 0,
+        Paradas: 0, "Lanzam.": 0, GC: 0,
+        Asistencia: 0, Pase: 0, "Exclusión +": 0,
+      };
+      const m = map[r.Jugador];
+      m.partits++;
+      if (haJugat(r)) m.partitsJugats++;
+      // "Goles" al Excel del porter = parades (mateix valor que Paradas)
+      m.Paradas       += r.Paradas || r.Goles || 0;
+      m["Lanzam."]    += r["Lanzam."] || 0;
+      m.GC            += ((r["Lanzam."] || 0) - (r.Paradas || r.Goles || 0));
+      m.Asistencia    += r.Asistencia || 0;
+      m.Pase          += r.Pase || 0;
+      m["Exclusión +"] += r["Exclusión +"] || 0;
+    });
+    return Object.values(map).map(m => {
+      const pj = m.partitsJugats || 1;
+      const avg1 = (v) => +(v / pj).toFixed(1);
+      return {
+        ...m,
+        eficiencia:  m["Lanzam."] ? Math.round((m.Paradas / m["Lanzam."]) * 100) : 0,
+        avgParades:  avg1(m.Paradas),
+        avgGC:       avg1(m.GC),
+        avgLanzReb:  avg1(m["Lanzam."]),
+        avgAss:      avg1(m.Asistencia),
+        avgPase:     avg1(m.Pase),
+      };
+    });
+  }, [portersFiltered]);
 
   const statsPerJugador = useMemo(() => {
     const map = {};
@@ -162,19 +218,49 @@ export default function Estadistica() {
     ];
   }, [filtreJugador, statsPerJugador]);
 
+  // Evolució per jornada d'un jugador concret (sense filtres de jornada/rival)
+  const evoJugador = useMemo(() => {
+    if (filtreJugador === "Tots") return [];
+    const isPorter = getPosicion(filtreJugador) === "PORTERO";
+    const jornadesList = Array.from(new Set(rawData.map(r => r.JORNADA))).filter(Boolean).sort((a,b)=>a-b);
+    let acumGoles=0, acumLanz=0, acumAss=0, acumRec=0, acumExcl=0, acumPas=0, acumPar=0, acumGC=0;
+    return jornadesList.map(j => {
+      const row = rawData.find(r => r.JORNADA === j && r.Jugador === filtreJugador);
+      const rival = (rawData.find(r => r.JORNADA === j)?.rival || "").replace(/\(.\)$/,"").trim();
+      const label = `J${j}`;
+      if (!row) return { label, rival, jugat: false, Goles:0,"Lanzam.":0,Asistencia:0,"Recup.":0,Exclusión:0,Pase:0,Parades:0,GC:0,Efic:0,acumGoles,acumLanz,acumAss,acumRec,acumExcl,acumPas,acumPar,acumGC };
+      const goles  = row.Goles || 0;
+      const lanz   = row["Lanzam."] || 0;
+      const ass    = row.Asistencia || 0;
+      const rec    = row["Recup."] || 0;
+      const excl   = row["Exclusión"] || 0;
+      const pas    = row.Pase || 0;
+      const par    = isPorter ? (row.Paradas || row.Goles || 0) : 0;
+      const gc     = isPorter ? (lanz - par) : 0;
+      const efic   = isPorter ? (lanz ? Math.round((par/lanz)*100) : 0) : (lanz ? Math.round((goles/lanz)*100) : 0);
+      acumGoles += goles; acumLanz += lanz; acumAss += ass; acumRec += rec;
+      acumExcl  += excl;  acumPas  += pas;  acumPar += par; acumGC  += gc;
+      return { label, rival, jugat: true, Goles:goles,"Lanzam.":lanz,Asistencia:ass,"Recup.":rec,Exclusión:excl,Pase:pas,Parades:par,GC:gc,Efic:efic,
+               acumGoles,acumLanz,acumAss,acumRec,acumExcl,acumPas,acumPar,acumGC,
+               acumEfic: acumLanz ? Math.round((isPorter?acumPar:acumGoles)/acumLanz*100) : 0 };
+    });
+  }, [filtreJugador, rawData]);
+
   const statsEquipPerJornada = useMemo(() => {
     const jornadesList = Array.from(new Set(rawData.map(r => r.JORNADA))).filter(Boolean).sort((a,b)=>a-b);
     return jornadesList.map(j => {
-      const rows   = rawData.filter(r => r.JORNADA === j);
-      const porter = rows.find(r => r.POSICION === "PORTERO");
-      const jugs   = rows.filter(r => r.POSICION === "JUGADOR");
-      const gf     = sum(jugs, "Goles");
-      const gc     = porter ? (porter["goles contra"] || 0) : 0;
-      const lanz   = sum(jugs, "Lanzam.");
-      const parades = porter ? (porter.Paradas || 0) : 0;
-      const rival  = rows[0]?.rival || "";
-      const lv     = rows[0]?.["L/V"] || "";
-      return { jornada: `J${j}`, rival: rival.replace(/\(.\)$/, "").trim(), lv, gf, gc, lanz, parades, efic: lanz ? Math.round((gf/lanz)*100) : 0 };
+      const rows    = rawData.filter(r => r.JORNADA === j);
+      const porters = rows.filter(r => r.POSICION === "PORTERO");
+      const jugs    = rows.filter(r => r.POSICION === "JUGADOR");
+      const gf      = sum(jugs, "Goles");
+      // GC = suma (lanzamientos rebuts - parades) de tots els porters del partit
+      const gc      = porters.reduce((acc, p) => acc + ((p["Lanzam."] || 0) - (p.Paradas || 0)), 0);
+      const lanz    = sum(jugs, "Lanzam.");
+      const parades = sum(porters, "Paradas");
+      const lanzRebuts = sum(porters, "Lanzam.");
+      const rival   = rows[0]?.rival || "";
+      const lv      = rows[0]?.["L/V"] || "";
+      return { jornada: `J${j}`, rival: rival.replace(/\(.\)$/, "").trim(), lv, gf, gc, lanz, parades, lanzRebuts, efic: lanz ? Math.round((gf/lanz)*100) : 0 };
     });
   }, [rawData]);
 
@@ -349,6 +435,90 @@ export default function Estadistica() {
           </ResponsiveContainer>
         </div>
 
+        {/* ── EVOLUCIÓ PER JORNADA (només quan hi ha jugador seleccionat) ── */}
+        {filtreJugador !== "Tots" && evoJugador.length > 0 && (() => {
+          const isPorter = getPosicion(filtreJugador) === "PORTERO";
+          // Definim els grups de camps disponibles
+          const campsJugador = [
+            { id: "Gols/Lançaments",    keys: ["Goles","Lanzam."],          acumKeys: ["acumGoles","acumLanz"] },
+            { id: "Eficiència (%)",      keys: ["Efic"],                     acumKeys: ["acumEfic"] },
+            { id: "Accions positives",   keys: ["Asistencia","Recup."],      acumKeys: ["acumAss","acumRec"] },
+            { id: "Accions negatives",   keys: ["Exclusión","Pase"],         acumKeys: ["acumExcl","acumPas"] },
+          ];
+          const campsPorter = [
+            { id: "Parades/Lançaments", keys: ["Parades","Lanzam."],        acumKeys: ["acumPar","acumLanz"] },
+            { id: "Eficiència (%)",      keys: ["Efic"],                     acumKeys: ["acumEfic"] },
+            { id: "Gols encaixats",      keys: ["GC"],                       acumKeys: ["acumGC"] },
+            { id: "Accions",             keys: ["Asistencia","Pase"],        acumKeys: ["acumAss","acumPas"] },
+          ];
+          const campsList = isPorter ? campsPorter : campsJugador;
+          const campActiu = campsList.find(c => c.id === grafEvoCamp) || campsList[0];
+          const dataKeys  = grafEvoMode === "acumulat" ? campActiu.acumKeys : campActiu.keys;
+          // Noms mostrats a llegenda (treure prefix "acum")
+          const keyLabel  = k => k.replace(/^acum/,"").replace("Goles","Gols").replace("Lanz","Lançam.").replace("Ass","Assist.").replace("Rec","Recup.").replace("Excl","Exclusions").replace("Pas","Pèrd.Passe").replace("Par","Parades").replace("GC","Gols enc.");
+          const grafData  = evoJugador.filter(d => d.jugat);
+          // Custom tooltip
+          const EvoTooltip = ({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const d = evoJugador.find(r => r.label === label);
+            return (
+              <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", padding:"10px 14px", fontSize:"12px" }}>
+                <div style={{ fontWeight:700, marginBottom:"4px" }}>{label}{d?.rival ? ` — ${d.rival}` : ""}</div>
+                {payload.map(p => <div key={p.dataKey} style={{ color:p.fill||p.stroke }}>{keyLabel(p.dataKey)}: <strong>{p.value}</strong>{campActiu.id==="Eficiència (%)"?"%":""}</div>)}
+              </div>
+            );
+          };
+          const ChartComp = grafEvoTipus === "linies" ? LineChart : BarChart;
+          return (
+            <div style={S.card}>
+              {/* Capçalera amb controls */}
+              <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
+                <div style={S.cardT}>📈 Evolució per jornada — {filtreJugador}</div>
+                {/* Toggle Partit / Acumulat */}
+                <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px", alignSelf:"center" }}>
+                  {[["partit","Per partit"],["acumulat","Acumulat"]].map(([val,lbl]) => (
+                    <button key={val} onClick={() => setGrafEvoMode(val)} style={{ padding:"4px 12px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"11px", fontWeight:600, background: grafEvoMode===val ? C.accent : "transparent", color: grafEvoMode===val ? "#fff" : C.muted, transition:"all .2s" }}>{lbl}</button>
+                  ))}
+                </div>
+              </div>
+              {/* Selector de camp + tipus gràfica */}
+              <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", marginBottom:"14px", alignItems:"center" }}>
+                <div style={S.gBtnsWrap}>
+                  <div style={S.gBtns}>
+                    {campsList.map(c => (
+                      <button key={c.id} style={S.gBtn(grafEvoCamp===c.id)} onClick={() => setGrafEvoCamp(c.id)}>{c.id}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px", marginLeft:"auto" }}>
+                  {[["barres","▮▮"],["linies","╱╲"]].map(([val,lbl]) => (
+                    <button key={val} onClick={() => setGrafEvoTipus(val)} style={{ padding:"4px 12px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:700, background: grafEvoTipus===val ? C.accent2 : "transparent", color: grafEvoTipus===val ? "#fff" : C.muted, transition:"all .2s" }}>{lbl}</button>
+                  ))}
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
+                <ChartComp data={grafData} margin={{ top:16, right:8, bottom:8, left: isMobile ? -10 : 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                  <XAxis dataKey="label" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 12 }} />
+                  <YAxis tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} width={isMobile ? 28 : 40} domain={campActiu.id==="Eficiència (%)" ? [0,100] : undefined} />
+                  <Tooltip content={<EvoTooltip />} />
+                  <Legend wrapperStyle={{ color:C.muted, fontSize: isMobile ? 10 : 12 }} formatter={keyLabel} />
+                  {grafEvoTipus === "barres"
+                    ? dataKeys.map((k,i) => (
+                        <Bar key={k} dataKey={k} name={k} fill={COLORS[i]} radius={[4,4,0,0]}>
+                          <LabelList dataKey={k} position="top" style={{ fill:C.muted, fontSize:10 }} formatter={v => v > 0 ? (campActiu.id==="Eficiència (%)" ? `${v}%` : v) : ""} />
+                        </Bar>
+                      ))
+                    : dataKeys.map((k,i) => (
+                        <Line key={k} type="monotone" dataKey={k} name={k} stroke={COLORS[i]} strokeWidth={2} dot={{ fill:COLORS[i], r: isMobile?3:5 }} label={!isMobile ? { position:"top", fill:COLORS[i], fontSize:11, formatter: v => v>0?(campActiu.id==="Eficiència (%)"?`${v}%`:v):"" } : false} />
+                      ))
+                  }
+                </ChartComp>
+              </ResponsiveContainer>
+            </div>
+          );
+        })()}
+
         {/* Radar + Taula — siempre en columna en móvil */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           {filtreJugador !== "Tots" && radarData.length > 0 && (
@@ -422,6 +592,113 @@ export default function Estadistica() {
             <p style={{ fontSize:"11px", color:C.muted, marginTop:"10px" }}>💡 Clica columna per ordenar · Clica jugador per veure perfil radar</p>
           </div>
         </div>
+
+        {/* ── PORTERS ── */}
+        {statsPerPorter.length > 0 && (() => {
+          // Dades per la gràfica de porters
+          const grafPorter = statsPerPorter.map(p => ({
+            name: p.Jugador,
+            Parades:   vistaMedia ? p.avgParades  : p.Paradas,
+            "Lanz. reb.": vistaMedia ? p.avgLanzReb : p["Lanzam."],
+          }));
+          const grafEfic = statsPerPorter.map(p => ({ name: p.Jugador, "Efic. %": p.eficiencia }));
+          const grafAccions = statsPerPorter.map(p => ({
+            name: p.Jugador,
+            Assistències: vistaMedia ? p.avgAss  : p.Asistencia,
+            "Pèrd. Passe": vistaMedia ? p.avgPase : p.Pase,
+          }));
+          const [grafPorterActiu, setGrafPorterActiu] = [filtreGraficPorter, setFiltreGraficPorter];
+          const grafData  = grafPorterActiu === "Parades/Lançaments" ? grafPorter
+                          : grafPorterActiu === "Eficiència"          ? grafEfic
+                          : grafAccions;
+          const grafKeys  = grafPorterActiu === "Parades/Lançaments" ? ["Parades","Lanz. reb."]
+                          : grafPorterActiu === "Eficiència"          ? ["Efic. %"]
+                          : ["Assistències","Pèrd. Passe"];
+          return (
+            <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
+              {/* Gràfica porters */}
+              <div style={S.card}>
+                <div style={{ marginBottom:"10px" }}>
+                  <div style={{ ...S.cardT, marginBottom:"8px" }}>🧤 Porters — Gràfica {vistaMedia ? "(mitjana/P)" : "(total)"}</div>
+                  <div style={S.gBtnsWrap}>
+                    <div style={S.gBtns}>
+                      {["Parades/Lançaments","Eficiència","Accions"].map(g => (
+                        <button key={g} style={S.gBtn(grafPorterActiu===g)} onClick={() => setFiltreGraficPorter(g)}>{g}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+                  <BarChart data={grafData} margin={{ top:16, right:8, bottom:20, left: isMobile ? -10 : 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                    <XAxis dataKey="name" tick={{ fill:C.muted, fontSize: isMobile ? 11 : 12 }} />
+                    <YAxis tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} width={isMobile ? 28 : 40} />
+                    <Tooltip {...tooltipStyle} />
+                    <Legend wrapperStyle={{ color:C.muted, fontSize: isMobile ? 10 : 12 }} />
+                    {grafKeys.map((k,i) => (
+                      <Bar key={k} dataKey={k} fill={COLORS[i+1]} radius={[4,4,0,0]}>
+                        <LabelList dataKey={k} position="top" style={{ fill:C.muted, fontSize:11 }} formatter={v => v > 0 ? v : ""} />
+                      </Bar>
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Taula porters */}
+              <div style={S.card}>
+                <div style={S.cardT}>🧤 Porters — Rànquing</div>
+                <div style={S.tableWrap}>
+                  <table style={{ ...S.table, minWidth: isMobile ? "500px" : "auto" }}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>Porter</th>
+                        <th style={S.th}>PJ</th>
+                        {vistaMedia ? (<>
+                          <th style={S.th}>Par/P</th>
+                          <th style={S.th}>LR/P</th>
+                          <th style={S.th}>GC/P</th>
+                          <th style={S.th}>Efic.%</th>
+                          <th style={S.th}>Ass/P</th>
+                          <th style={S.th}>Pas/P</th>
+                        </>) : (<>
+                          <th style={S.th}>Parades</th>
+                          <th style={S.th}>Lanz. reb.</th>
+                          <th style={S.th}>GC</th>
+                          <th style={S.th}>Efic.%</th>
+                          <th style={S.th}>Ass.</th>
+                          <th style={S.th}>Pèrd. Passe</th>
+                        </>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...statsPerPorter].sort((a,b) => b.eficiencia - a.eficiencia).map((row, i) => (
+                        <tr key={row.Jugador} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
+                          <td style={{ ...S.td, fontWeight:600 }}>{row.Jugador}</td>
+                          <td style={{ ...S.tdr, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
+                          {vistaMedia ? (<>
+                            <td style={S.tdr}>{row.avgParades}</td>
+                            <td style={S.tdr}>{row.avgLanzReb}</td>
+                            <td style={S.tdr}><strong style={{ color:C.negative }}>{row.avgGC}</strong></td>
+                            <td style={S.tdr}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
+                            <td style={S.tdr}>{row.avgAss}</td>
+                            <td style={S.tdr}>{row.avgPase}</td>
+                          </>) : (<>
+                            <td style={S.tdr}>{row.Paradas}</td>
+                            <td style={S.tdr}>{row["Lanzam."]}</td>
+                            <td style={S.tdr}><strong style={{ color:C.negative }}>{row.GC}</strong></td>
+                            <td style={S.tdr}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
+                            <td style={S.tdr}>{row.Asistencia}</td>
+                            <td style={S.tdr}>{row.Pase}</td>
+                          </>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </>)}
 
       {/* ══ EQUIP ══ */}
@@ -441,7 +718,8 @@ export default function Estadistica() {
           const totalLanz= sum(data,"lanz");
           const totalPar = sum(data,"parades");
           const eficAtac = totalLanz ? Math.round((totalGF/totalLanz)*100) : 0;
-          const eficPort = (totalGC+totalPar) ? Math.round((totalPar/(totalGC+totalPar))*100) : 0;
+          const totalLanzRebuts = sum(data,"lanzRebuts");
+          const eficPort = totalLanzRebuts ? Math.round((totalPar/totalLanzRebuts)*100) : 0;
           return (<>
             <div style={S.kpis}>
               {[[totalGF,"Gols favor",C.positive],[totalGC,"Gols contra",C.negative],[`${eficAtac}%`,"Efic. atac",null],[`${eficPort}%`,"Efic. porteria",C.accent2],[totalPar,"Parades",C.accent3],[data.length,"Partits",C.warning]].map(([v,l,color]) => (

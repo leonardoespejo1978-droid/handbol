@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import "./style_1.css";
 
-const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com"];
+const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com", "aleix7@fcb.es"];
 
 export default function HomePage({ session }) {
   const [loggedIn, setLoggedIn] = useState(!!session);
