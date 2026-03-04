@@ -18,8 +18,20 @@ const COLORS = ["#e63946","#457b9d","#2a9d8f","#e9c46a","#f4a261","#a8dadc"];
 
 const sum = (arr, key) => arr.reduce((a, r) => a + (r[key] || 0), 0);
 
+// ─── Hook: detectar si es móvil ───────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isMobile;
+}
+
 export default function Estadistica() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [rawData, setRawData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +82,6 @@ export default function Estadistica() {
 
   const jugadorsFiltered = useMemo(() => filtered.filter(r => r.POSICION === "JUGADOR"), [filtered]);
 
-  // Camps estadístics que determinen si un jugador ha jugat
   const STAT_FIELDS = ["Goles","Lanzam.","Asistencia","Recup.","Exclusión","Pase","Área","PenaltiProvocado","Exclusión +"];
   const haJugat = (r) => STAT_FIELDS.some(k => r[k] != null && r[k] !== 0);
 
@@ -177,33 +188,47 @@ export default function Estadistica() {
     return { totalGols, totalLanz, efic, totalAss, totalRec, partitsUnics };
   }, [jugadorsFiltered, filtered]);
 
-  // ─── Styles ───────────────────────────────────────────────────────────────
+  // ─── Responsive Styles ────────────────────────────────────────────────────
   const S = {
-    page:    { minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif", padding: "24px 16px" },
-    header:  { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" },
-    title:   { fontSize: "20px", fontWeight: 700, letterSpacing: "-0.5px" },
-    sub:     { fontSize: "12px", color: C.muted, marginTop: "2px" },
-    backBtn: { background: "transparent", border: `1px solid ${C.border}`, color: C.muted, padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" },
-    tabs:    { display: "flex", gap: "4px", background: C.card, padding: "4px", borderRadius: "10px", marginBottom: "20px", border: `1px solid ${C.border}`, width: "fit-content" },
-    tab:     (a) => ({ padding: "8px 18px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, background: a ? C.accent : "transparent", color: a ? "#fff" : C.muted, transition: "all .2s" }),
-    filters: { display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px", alignItems: "flex-end" },
-    fgroup:  { display: "flex", flexDirection: "column", gap: "4px" },
+    page:    { minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif", padding: isMobile ? "16px 12px" : "24px 16px", boxSizing: "border-box" },
+    header:  { display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: "20px", flexWrap: "wrap", gap: "10px" },
+    title:   { fontSize: isMobile ? "16px" : "20px", fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1.3 },
+    sub:     { fontSize: "11px", color: C.muted, marginTop: "2px" },
+    backBtn: { background: "transparent", border: `1px solid ${C.border}`, color: C.muted, padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" },
+
+    // Tabs — en móvil scroll horizontal
+    tabsWrap: { overflowX: "auto", WebkitOverflowScrolling: "touch", marginBottom: "18px", paddingBottom: "2px" },
+    tabs:    { display: "flex", gap: "4px", background: C.card, padding: "4px", borderRadius: "10px", border: `1px solid ${C.border}`, width: "fit-content", minWidth: isMobile ? "max-content" : "auto" },
+    tab:     (a) => ({ padding: isMobile ? "7px 14px" : "8px 18px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: isMobile ? "12px" : "13px", fontWeight: 600, background: a ? C.accent : "transparent", color: a ? "#fff" : C.muted, transition: "all .2s", whiteSpace: "nowrap" }),
+
+    // Filtres — columna en móvil
+    filters: { display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "18px", alignItems: "flex-end" },
+    fgroup:  { display: "flex", flexDirection: "column", gap: "4px", flex: isMobile ? "1 1 calc(50% - 5px)" : "0 1 auto", minWidth: 0 },
     label:   { fontSize: "11px", color: C.muted },
-    select:  { background: C.card, border: `1px solid ${C.border}`, color: C.text, padding: "7px 12px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", outline: "none" },
-    kpis:    { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: "10px", marginBottom: "20px" },
-    kpi:     { background: C.card, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "16px", textAlign: "center" },
-    kpiVal:  (color) => ({ fontSize: "26px", fontWeight: 700, color: color || C.accent }),
-    kpiLbl:  { fontSize: "11px", color: C.muted, marginTop: "3px" },
-    card:    { background: C.card, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "20px", marginBottom: "16px" },
-    cardT:   { fontSize: "11px", fontWeight: 600, color: C.muted, marginBottom: "14px", textTransform: "uppercase", letterSpacing: "0.6px" },
-    table:   { width: "100%", borderCollapse: "collapse", fontSize: "13px" },
-    th:      { padding: "10px 12px", textAlign: "left", color: C.muted, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" },
-    td:      { padding: "9px 12px", borderBottom: `1px solid ${C.border}20` },
-    tdr:     { padding: "9px 12px", borderBottom: `1px solid ${C.border}20`, textAlign: "right", fontVariantNumeric: "tabular-nums" },
-    badge:   (color) => ({ background: `${color}22`, color, padding: "2px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: 600 }),
-    gBtns:   { display: "flex", gap: "8px", flexWrap: "wrap" },
-    gBtn:    (a) => ({ padding: "5px 13px", borderRadius: "6px", border: `1px solid ${a ? C.accent : C.border}`, background: a ? `${C.accent}22` : "transparent", color: a ? C.accent : C.muted, fontSize: "12px", cursor: "pointer", fontWeight: a ? 600 : 400 }),
-    clearBtn:{ background: "transparent", border: `1px solid ${C.negative}`, color: C.negative, padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "12px" },
+    select:  { background: C.card, border: `1px solid ${C.border}`, color: C.text, padding: "8px 10px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", outline: "none", width: "100%", boxSizing: "border-box" },
+
+    // KPIs — 3 columnas en móvil, auto en desktop
+    kpis:    { display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(auto-fit, minmax(120px, 1fr))", gap: isMobile ? "8px" : "10px", marginBottom: "18px" },
+    kpi:     { background: C.card, border: `1px solid ${C.border}`, borderRadius: "10px", padding: isMobile ? "12px 8px" : "16px", textAlign: "center" },
+    kpiVal:  (color) => ({ fontSize: isMobile ? "20px" : "26px", fontWeight: 700, color: color || C.accent }),
+    kpiLbl:  { fontSize: isMobile ? "10px" : "11px", color: C.muted, marginTop: "3px" },
+
+    card:    { background: C.card, border: `1px solid ${C.border}`, borderRadius: "12px", padding: isMobile ? "14px" : "20px", marginBottom: "14px" },
+    cardT:   { fontSize: "11px", fontWeight: 600, color: C.muted, marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.6px" },
+
+    // Tabla con scroll horizontal en móvil
+    tableWrap: { overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "4px" },
+    table:   { width: "100%", borderCollapse: "collapse", fontSize: isMobile ? "12px" : "13px", minWidth: isMobile ? "520px" : "auto" },
+    th:      { padding: isMobile ? "8px 10px" : "10px 12px", textAlign: "left", color: C.muted, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" },
+    td:      { padding: isMobile ? "8px 10px" : "9px 12px", borderBottom: `1px solid ${C.border}20` },
+    tdr:     { padding: isMobile ? "8px 10px" : "9px 12px", borderBottom: `1px solid ${C.border}20`, textAlign: "right", fontVariantNumeric: "tabular-nums" },
+    badge:   (color) => ({ background: `${color}22`, color, padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: 600, display: "inline-block" }),
+
+    // Botones gráfica — scroll horizontal en móvil
+    gBtnsWrap: { overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "2px" },
+    gBtns:   { display: "flex", gap: "6px", width: "max-content" },
+    gBtn:    (a) => ({ padding: "5px 11px", borderRadius: "6px", border: `1px solid ${a ? C.accent : C.border}`, background: a ? `${C.accent}22` : "transparent", color: a ? C.accent : C.muted, fontSize: "11px", cursor: "pointer", fontWeight: a ? 600 : 400, whiteSpace: "nowrap" }),
+    clearBtn:{ background: "transparent", border: `1px solid ${C.negative}`, color: C.negative, padding: "7px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "12px", alignSelf: "flex-end" },
   };
 
   const toggleOrder = (col) => { if (ordenarPer === col) setOrdenDesc(!ordenDesc); else { setOrdenarPer(col); setOrdenDesc(true); } };
@@ -211,7 +236,12 @@ export default function Estadistica() {
   const hasFilter = filtreJornada !== "Totes" || filtreRival !== "Tots" || filtreJugador !== "Tots";
   const clearFilters = () => { setFiltreJornada("Totes"); setFiltreRival("Tots"); setFiltreJugador("Tots"); };
 
-  const tooltipStyle = { contentStyle: { background: C.card, border: `1px solid ${C.border}`, borderRadius: "8px", color: C.text } };
+  const tooltipStyle = { contentStyle: { background: C.card, border: `1px solid ${C.border}`, borderRadius: "8px", color: C.text, fontSize: "12px" } };
+
+  // Altura gràfiques adaptada al dispositiu
+  const chartH = isMobile ? 200 : 260;
+  // Margen inferior para labels rotados
+  const chartMarginBottom = isMobile ? 70 : 64;
 
   if (loading) return (
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -221,7 +251,7 @@ export default function Estadistica() {
 
   if (error) return (
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: C.card, border: `1px solid ${C.accent}44`, borderRadius: "12px", padding: "32px", maxWidth: "480px", textAlign: "center" }}>
+      <div style={{ background: C.card, border: `1px solid ${C.accent}44`, borderRadius: "12px", padding: "24px", maxWidth: "90vw", textAlign: "center" }}>
         <div style={{ fontSize: "32px" }}>⚠️</div>
         <p style={{ color: C.accent, fontWeight: 600, margin: "12px 0 8px" }}>Error carregant el fitxer</p>
         <p style={{ color: C.muted, fontSize: "13px", marginBottom: "16px" }}>{error}</p>
@@ -235,19 +265,22 @@ export default function Estadistica() {
 
   return (
     <div style={S.page}>
+      {/* Header */}
       <div style={S.header}>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={S.title}>📊 Estadístiques — Lliga Infantil Masculí</div>
-          <div style={S.sub}>Fase 3 · Temporada 25/26 · {rawData.length} registres carregats</div>
+          <div style={S.sub}>Fase 3 · Temporada 25/26 · {rawData.length} registres</div>
         </div>
         <button style={S.backBtn} onClick={() => navigate("/")}>← Enrere</button>
       </div>
 
-      {/* Tabs */}
-      <div style={S.tabs}>
-        {[["individual","👤 Individual"],["equip","🏆 Equip"],["resultats","📋 Resultats"]].map(([id,lbl]) => (
-          <button key={id} style={S.tab(tab===id)} onClick={() => setTab(id)}>{lbl}</button>
-        ))}
+      {/* Tabs — scrollables en móvil */}
+      <div style={S.tabsWrap}>
+        <div style={S.tabs}>
+          {[["individual","👤 Individual"],["equip","🏆 Equip"],["resultats","📋 Resultats"]].map(([id,lbl]) => (
+            <button key={id} style={S.tab(tab===id)} onClick={() => setTab(id)}>{lbl}</button>
+          ))}
+        </div>
       </div>
 
       {/* ══ INDIVIDUAL ══ */}
@@ -287,97 +320,106 @@ export default function Estadistica() {
 
         {/* Gràfica barres */}
         <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-            <div style={S.cardT}>Gràfica {vistaMedia ? "(mitjana/partit)" : "(total)"}</div>
-            <div style={S.gBtns}>
-              {["Gols/Lançaments","Eficiència","Accions positives","Accions negatives"].map(g => (
-                <button key={g} style={S.gBtn(filtreGrafic===g)} onClick={() => setFiltreGrafic(g)}>{g}</button>
-              ))}
+          <div style={{ marginBottom: "12px" }}>
+            <div style={{ ...S.cardT, marginBottom: "8px" }}>Gràfica {vistaMedia ? "(mitjana/partit)" : "(total)"}</div>
+            {/* Botones gràfica — scroll horizontal */}
+            <div style={S.gBtnsWrap}>
+              <div style={S.gBtns}>
+                {["Gols/Lançaments","Eficiència","Accions positives","Accions negatives"].map(g => (
+                  <button key={g} style={S.gBtn(filtreGrafic===g)} onClick={() => setFiltreGrafic(g)}>{g}</button>
+                ))}
+              </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={graficaIndividual} margin={{ top:20, right:16, bottom:64, left:0 }}>
+          <ResponsiveContainer width="100%" height={chartH}>
+            <BarChart data={graficaIndividual} margin={{ top:16, right:8, bottom:chartMarginBottom, left: isMobile ? -10 : 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-              <XAxis dataKey="name" tick={{ fill:C.muted, fontSize:11 }} angle={-35} textAnchor="end" interval={0} />
-              <YAxis tick={{ fill:C.muted, fontSize:11 }} />
+              <XAxis dataKey="name" tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} angle={-35} textAnchor="end" interval={0} />
+              <YAxis tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} width={isMobile ? 28 : 40} />
               <Tooltip {...tooltipStyle} />
-              <Legend wrapperStyle={{ color:C.muted, fontSize:12 }} />
+              <Legend wrapperStyle={{ color:C.muted, fontSize: isMobile ? 10 : 12 }} />
               {graficaBarsKeys.map((k,i) => (
                 <Bar key={k} dataKey={k} fill={COLORS[i]} radius={[4,4,0,0]}>
-                  <LabelList dataKey={k} position="top" style={{ fill: C.muted, fontSize: 11, fontVariantNumeric: "tabular-nums" }} formatter={v => v > 0 ? v : ""} />
+                  {!isMobile && (
+                    <LabelList dataKey={k} position="top" style={{ fill: C.muted, fontSize: 11, fontVariantNumeric: "tabular-nums" }} formatter={v => v > 0 ? v : ""} />
+                  )}
                 </Bar>
               ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Radar + Taula */}
-        <div style={{ display: "grid", gridTemplateColumns: filtreJugador !== "Tots" && radarData.length ? "320px 1fr" : "1fr", gap: "16px" }}>
+        {/* Radar + Taula — siempre en columna en móvil */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           {filtreJugador !== "Tots" && radarData.length > 0 && (
             <div style={S.card}>
               <div style={S.cardT}>Perfil — {filtreJugador}</div>
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke={C.border} />
-                  <PolarAngleAxis dataKey="stat" tick={{ fill:C.muted, fontSize:11 }} />
+                  <PolarAngleAxis dataKey="stat" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 11 }} />
                   <PolarRadiusAxis domain={[0,100]} tick={false} axisLine={false} />
                   <Radar dataKey="val" stroke={C.accent} fill={C.accent} fillOpacity={0.25} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           )}
-          <div style={{ ...S.card, overflowX: "auto" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"14px", flexWrap:"wrap", gap:"8px" }}>
+
+          <div style={{ ...S.card, padding: isMobile ? "14px 10px" : "20px" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"12px", flexWrap:"wrap", gap:"8px" }}>
               <div style={S.cardT}>Rànquing jugadors</div>
-              <div style={{ display:"flex", gap:"4px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
-                <button onClick={() => setVistaMedia(false)} style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:600, background: !vistaMedia ? C.accent : "transparent", color: !vistaMedia ? "#fff" : C.muted, transition:"all .2s" }}>Total</button>
-                <button onClick={() => setVistaMedia(true)}  style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:600, background:  vistaMedia ? C.accent : "transparent", color:  vistaMedia ? "#fff" : C.muted, transition:"all .2s" }}>Mitjana/partit</button>
+              <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
+                <button onClick={() => setVistaMedia(false)} style={{ padding:"4px 12px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"11px", fontWeight:600, background: !vistaMedia ? C.accent : "transparent", color: !vistaMedia ? "#fff" : C.muted, transition:"all .2s" }}>Total</button>
+                <button onClick={() => setVistaMedia(true)}  style={{ padding:"4px 12px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"11px", fontWeight:600, background:  vistaMedia ? C.accent : "transparent", color:  vistaMedia ? "#fff" : C.muted, transition:"all .2s" }}>Mitjana</button>
               </div>
             </div>
-            <table style={S.table}>
-              <thead>
-                <tr>
-                  <th style={S.th}>#</th>
-                  <th style={S.th}>Jugador</th>
-                  <th style={S.th}>PJ</th>
-                  {(vistaMedia
-                    ? [["avgGoles","Gols/P"],["avgLanzam","Lanz/P"],["eficiencia","Efic%"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
-                    : [["Goles","Gols"],["Lanzam.","Lanz."],["eficiencia","Efic%"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
-                  ).map(([col,lbl]) => (
-                    <th key={col} style={S.th} onClick={() => toggleOrder(col)}>{lbl}{arr(col)}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {statsSorted.map((row, i) => (
-                  <tr key={row.Jugador}
-                    style={{ background: i%2===0?"transparent":`${C.border}18`, cursor:"pointer" }}
-                    onClick={() => setFiltreJugador(row.Jugador === filtreJugador ? "Tots" : row.Jugador)}>
-                    <td style={S.td}><span style={S.badge(i<3?C.warning:C.muted)}>{i+1}</span></td>
-                    <td style={{ ...S.td, fontWeight:600, color: row.Jugador===filtreJugador?C.accent:C.text }}>{row.Jugador}</td>
-                    <td style={{ ...S.tdr, color:C.muted, fontSize:"12px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
-                    {vistaMedia ? (<>
-                      <td style={S.tdr}>{row.avgGoles}</td>
-                      <td style={S.tdr}>{row.avgLanzam}</td>
-                      <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                      <td style={S.tdr}>{row.avgAsistencia}</td>
-                      <td style={S.tdr}>{row.avgRecup}</td>
-                      <td style={S.tdr}>{row.avgExclusion}</td>
-                      <td style={S.tdr}>{row.avgPenalti}</td>
-                    </>) : (<>
-                      <td style={S.tdr}>{row.Goles}</td>
-                      <td style={S.tdr}>{row["Lanzam."]}</td>
-                      <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                      <td style={S.tdr}>{row.Asistencia}</td>
-                      <td style={S.tdr}>{row["Recup."]}</td>
-                      <td style={S.tdr}>{row.Exclusión}</td>
-                      <td style={S.tdr}>{row.PenaltiProvocado}</td>
-                    </>)}
+            {/* Tabla con scroll horizontal */}
+            <div style={S.tableWrap}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>#</th>
+                    <th style={S.th}>Jugador</th>
+                    <th style={S.th}>PJ</th>
+                    {(vistaMedia
+                      ? [["avgGoles","Gols/P"],["avgLanzam","Lanz/P"],["eficiencia","Efic%"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
+                      : [["Goles","Gols"],["Lanzam.","Lanz."],["eficiencia","Efic%"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
+                    ).map(([col,lbl]) => (
+                      <th key={col} style={S.th} onClick={() => toggleOrder(col)}>{lbl}{arr(col)}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style={{ fontSize:"11px", color:C.muted, marginTop:"10px" }}>💡 Clica columna per ordenar · Clica jugador per veure perfil radar · PJ = partits jugats / convocats</p>
+                </thead>
+                <tbody>
+                  {statsSorted.map((row, i) => (
+                    <tr key={row.Jugador}
+                      style={{ background: i%2===0?"transparent":`${C.border}18`, cursor:"pointer" }}
+                      onClick={() => setFiltreJugador(row.Jugador === filtreJugador ? "Tots" : row.Jugador)}>
+                      <td style={S.td}><span style={S.badge(i<3?C.warning:C.muted)}>{i+1}</span></td>
+                      <td style={{ ...S.td, fontWeight:600, color: row.Jugador===filtreJugador?C.accent:C.text, whiteSpace: "nowrap" }}>{row.Jugador}</td>
+                      <td style={{ ...S.tdr, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
+                      {vistaMedia ? (<>
+                        <td style={S.tdr}>{row.avgGoles}</td>
+                        <td style={S.tdr}>{row.avgLanzam}</td>
+                        <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
+                        <td style={S.tdr}>{row.avgAsistencia}</td>
+                        <td style={S.tdr}>{row.avgRecup}</td>
+                        <td style={S.tdr}>{row.avgExclusion}</td>
+                        <td style={S.tdr}>{row.avgPenalti}</td>
+                      </>) : (<>
+                        <td style={S.tdr}>{row.Goles}</td>
+                        <td style={S.tdr}>{row["Lanzam."]}</td>
+                        <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
+                        <td style={S.tdr}>{row.Asistencia}</td>
+                        <td style={S.tdr}>{row["Recup."]}</td>
+                        <td style={S.tdr}>{row.Exclusión}</td>
+                        <td style={S.tdr}>{row.PenaltiProvocado}</td>
+                      </>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ fontSize:"11px", color:C.muted, marginTop:"10px" }}>💡 Clica columna per ordenar · Clica jugador per veure perfil radar</p>
           </div>
         </div>
       </>)}
@@ -385,7 +427,7 @@ export default function Estadistica() {
       {/* ══ EQUIP ══ */}
       {tab === "equip" && (<>
         <div style={S.filters}>
-          <div style={S.fgroup}>
+          <div style={{ ...S.fgroup, flex: "0 1 auto" }}>
             <span style={S.label}>Jornada</span>
             <select style={S.select} value={filtreJornada} onChange={e => setFiltreJornada(e.target.value)}>
               {jornades.map(j => <option key={j}>{j}</option>)}
@@ -402,47 +444,49 @@ export default function Estadistica() {
           const eficPort = (totalGC+totalPar) ? Math.round((totalPar/(totalGC+totalPar))*100) : 0;
           return (<>
             <div style={S.kpis}>
-              {[[totalGF,"Gols a favor",C.positive],[totalGC,"Gols en contra",C.negative],[`${eficAtac}%`,"Efic. atac",null],[`${eficPort}%`,"Efic. porteria",C.accent2],[totalPar,"Parades",C.accent3],[data.length,"Partits",C.warning]].map(([v,l,color]) => (
+              {[[totalGF,"Gols favor",C.positive],[totalGC,"Gols contra",C.negative],[`${eficAtac}%`,"Efic. atac",null],[`${eficPort}%`,"Efic. porteria",C.accent2],[totalPar,"Parades",C.accent3],[data.length,"Partits",C.warning]].map(([v,l,color]) => (
                 <div key={l} style={S.kpi}><div style={S.kpiVal(color)}>{v}</div><div style={S.kpiLbl}>{l}</div></div>
               ))}
             </div>
             <div style={S.card}>
               <div style={S.cardT}>Evolució per jornades</div>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={statsEquipPerJornada}>
+              <ResponsiveContainer width="100%" height={chartH}>
+                <LineChart data={statsEquipPerJornada} margin={{ top:10, right:8, bottom:10, left: isMobile ? -10 : 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                  <XAxis dataKey="jornada" tick={{ fill:C.muted, fontSize:12 }} />
-                  <YAxis tick={{ fill:C.muted, fontSize:12 }} />
+                  <XAxis dataKey="jornada" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 12 }} />
+                  <YAxis tick={{ fill:C.muted, fontSize: isMobile ? 10 : 12 }} width={isMobile ? 28 : 40} />
                   <Tooltip {...tooltipStyle}
                     formatter={(v,n) => [v, n==="gf"?"Gols favor":n==="gc"?"Gols contra":n]}
                     labelFormatter={l => { const d=statsEquipPerJornada.find(r=>r.jornada===l); return d?`${l} vs ${d.rival}`:l; }} />
-                  <Legend wrapperStyle={{ color:C.muted, fontSize:12 }} formatter={v => v==="gf"?"Gols favor":v==="gc"?"Gols contra":v} />
-                  <Line type="monotone" dataKey="gf"   stroke={C.positive} strokeWidth={2} dot={{ fill:C.positive, r:5 }} label={{ position:"top", fill:C.positive, fontSize:11 }} />
-                  <Line type="monotone" dataKey="gc"   stroke={C.negative} strokeWidth={2} dot={{ fill:C.negative, r:5 }} label={{ position:"top", fill:C.negative, fontSize:11 }} />
-                  <Line type="monotone" dataKey="efic" stroke={C.warning}  strokeWidth={2} strokeDasharray="5 5" dot={{ fill:C.warning, r:4 }} />
+                  <Legend wrapperStyle={{ color:C.muted, fontSize: isMobile ? 10 : 12 }} formatter={v => v==="gf"?"Gols favor":v==="gc"?"Gols contra":v} />
+                  <Line type="monotone" dataKey="gf" stroke={C.positive} strokeWidth={2} dot={{ fill:C.positive, r: isMobile ? 3 : 5 }} label={!isMobile ? { position:"top", fill:C.positive, fontSize:11 } : false} />
+                  <Line type="monotone" dataKey="gc" stroke={C.negative} strokeWidth={2} dot={{ fill:C.negative, r: isMobile ? 3 : 5 }} label={!isMobile ? { position:"top", fill:C.negative, fontSize:11 } : false} />
+                  <Line type="monotone" dataKey="efic" stroke={C.warning} strokeWidth={2} strokeDasharray="5 5" dot={{ fill:C.warning, r: isMobile ? 3 : 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div style={{ ...S.card, overflowX:"auto" }}>
+            <div style={{ ...S.card }}>
               <div style={S.cardT}>Resultats per jornada</div>
-              <table style={S.table}>
-                <thead><tr>{["Jornada","Rival","L/V","Gols F","Gols C","Lanz.","Efic%","Parades","Resultat"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {statsEquipPerJornada.map((row,i) => (
-                    <tr key={row.jornada} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
-                      <td style={S.td}><strong>{row.jornada}</strong></td>
-                      <td style={S.td}>{row.rival}</td>
-                      <td style={S.td}><span style={S.badge(row.lv==="L"?C.accent2:C.accent3)}>{row.lv==="L"?"Casa":"Fora"}</span></td>
-                      <td style={S.tdr}><strong style={{ color:C.positive }}>{row.gf}</strong></td>
-                      <td style={S.tdr}><strong style={{ color:C.negative }}>{row.gc}</strong></td>
-                      <td style={S.tdr}>{row.lanz}</td>
-                      <td style={S.tdr}><span style={S.badge(row.efic>=70?C.positive:row.efic>=50?C.warning:C.negative)}>{row.efic}%</span></td>
-                      <td style={S.tdr}>{row.parades}</td>
-                      <td style={S.td}><span style={S.badge(row.gf>row.gc?C.positive:row.gf<row.gc?C.negative:C.warning)}>{row.gf>row.gc?"✓ Victòria":row.gf<row.gc?"✗ Derrota":"= Empat"}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div style={S.tableWrap}>
+                <table style={{ ...S.table, minWidth: isMobile ? "560px" : "auto" }}>
+                  <thead><tr>{["Jornada","Rival","L/V","Gols F","Gols C","Lanz.","Efic%","Parades","Resultat"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {statsEquipPerJornada.map((row,i) => (
+                      <tr key={row.jornada} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
+                        <td style={S.td}><strong>{row.jornada}</strong></td>
+                        <td style={{ ...S.td, whiteSpace: "nowrap" }}>{row.rival}</td>
+                        <td style={S.td}><span style={S.badge(row.lv==="L"?C.accent2:C.accent3)}>{row.lv==="L"?"Casa":"Fora"}</span></td>
+                        <td style={S.tdr}><strong style={{ color:C.positive }}>{row.gf}</strong></td>
+                        <td style={S.tdr}><strong style={{ color:C.negative }}>{row.gc}</strong></td>
+                        <td style={S.tdr}>{row.lanz}</td>
+                        <td style={S.tdr}><span style={S.badge(row.efic>=70?C.positive:row.efic>=50?C.warning:C.negative)}>{row.efic}%</span></td>
+                        <td style={S.tdr}>{row.parades}</td>
+                        <td style={S.td}><span style={S.badge(row.gf>row.gc?C.positive:row.gf<row.gc?C.negative:C.warning)}>{row.gf>row.gc?"✓ Victòria":row.gf<row.gc?"✗ Derrota":"= Empat"}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>);
         })()}
@@ -464,7 +508,7 @@ export default function Estadistica() {
 
         <div style={S.card}>
           <div style={S.cardT}>Gols per rival</div>
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={chartH}>
             <BarChart data={(() => {
               const map = {};
               rawData.filter(r => r.POSICION==="JUGADOR").forEach(r => {
@@ -477,44 +521,46 @@ export default function Estadistica() {
                 if (map[k]) map[k].gc = r["goles contra"] || map[k].gc;
               });
               return Object.values(map);
-            })()} margin={{ top:20, right:16, bottom:60, left:0 }}>
+            })()} margin={{ top:16, right:8, bottom:chartMarginBottom, left: isMobile ? -10 : 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-              <XAxis dataKey="rival" tick={{ fill:C.muted, fontSize:11 }} angle={-30} textAnchor="end" interval={0} />
-              <YAxis tick={{ fill:C.muted, fontSize:11 }} />
+              <XAxis dataKey="rival" tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} angle={-30} textAnchor="end" interval={0} />
+              <YAxis tick={{ fill:C.muted, fontSize: isMobile ? 9 : 11 }} width={isMobile ? 28 : 40} />
               <Tooltip {...tooltipStyle} />
-              <Legend wrapperStyle={{ color:C.muted, fontSize:12 }} />
+              <Legend wrapperStyle={{ color:C.muted, fontSize: isMobile ? 10 : 12 }} />
               <Bar dataKey="gf" name="Gols favor"  fill={C.positive} radius={[4,4,0,0]}>
-                <LabelList dataKey="gf" position="top" style={{ fill: C.muted, fontSize: 11 }} formatter={v => v > 0 ? v : ""} />
+                {!isMobile && <LabelList dataKey="gf" position="top" style={{ fill: C.muted, fontSize: 11 }} formatter={v => v > 0 ? v : ""} />}
               </Bar>
               <Bar dataKey="gc" name="Gols contra" fill={C.negative} radius={[4,4,0,0]}>
-                <LabelList dataKey="gc" position="top" style={{ fill: C.muted, fontSize: 11 }} formatter={v => v > 0 ? v : ""} />
+                {!isMobile && <LabelList dataKey="gc" position="top" style={{ fill: C.muted, fontSize: 11 }} formatter={v => v > 0 ? v : ""} />}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div style={{ ...S.card, overflowX:"auto" }}>
+        <div style={S.card}>
           <div style={S.cardT}>Registres detallats ({filtered.length} files)</div>
-          <table style={S.table}>
-            <thead><tr>{["Jugador","Jornada","Rival","Gols","Lanz.","Efic%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
-            <tbody>
-              {filtered.map((row,i) => (
-                <tr key={i} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
-                  <td style={{ ...S.td, fontWeight:600 }}>{row.Jugador}</td>
-                  <td style={S.tdr}>J{row.JORNADA}</td>
-                  <td style={{ ...S.td, fontSize:"12px", color:C.muted }}>{(row.rival||"").replace(/\(.\)$/,"").trim()}</td>
-                  <td style={S.tdr}>{row.Goles ?? "—"}</td>
-                  <td style={S.tdr}>{row["Lanzam."] ?? "—"}</td>
-                  <td style={S.tdr}>{row["% lanz"]!=null?`${row["% lanz"]}%`:"—"}</td>
-                  <td style={S.tdr}>{row.Asistencia ?? "—"}</td>
-                  <td style={S.tdr}>{row["Recup."] ?? "—"}</td>
-                  <td style={S.tdr}>{row["Exclusión"] ?? "—"}</td>
-                  <td style={S.tdr}>{row.Pase ?? "—"}</td>
-                  <td style={S.tdr}>{row.Área ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={S.tableWrap}>
+            <table style={{ ...S.table, minWidth: isMobile ? "580px" : "auto" }}>
+              <thead><tr>{["Jugador","Jornada","Rival","Gols","Lanz.","Efic%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {filtered.map((row,i) => (
+                  <tr key={i} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
+                    <td style={{ ...S.td, fontWeight:600, whiteSpace:"nowrap" }}>{row.Jugador}</td>
+                    <td style={S.tdr}>J{row.JORNADA}</td>
+                    <td style={{ ...S.td, fontSize:"11px", color:C.muted, whiteSpace:"nowrap" }}>{(row.rival||"").replace(/\(.\)$/,"").trim()}</td>
+                    <td style={S.tdr}>{row.Goles ?? "—"}</td>
+                    <td style={S.tdr}>{row["Lanzam."] ?? "—"}</td>
+                    <td style={S.tdr}>{row["% lanz"]!=null?`${row["% lanz"]}%`:"—"}</td>
+                    <td style={S.tdr}>{row.Asistencia ?? "—"}</td>
+                    <td style={S.tdr}>{row["Recup."] ?? "—"}</td>
+                    <td style={S.tdr}>{row["Exclusión"] ?? "—"}</td>
+                    <td style={S.tdr}>{row.Pase ?? "—"}</td>
+                    <td style={S.tdr}>{row.Área ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </>)}
     </div>
