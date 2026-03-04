@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import "./style_1.css";
 
+const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com"];
+
 export default function HomePage({ session }) {
   const [loggedIn, setLoggedIn] = useState(!!session);
   const navigate = useNavigate();
-
   const role = session?.user?.raw_user_meta_data?.role || "user";
+  const email = session?.user?.email || "";
+  const canSeeStats = STATS_ALLOWED.includes(email);
 
   return (
     <div className="home">
-
       {/* Login */}
       {!loggedIn && <LoginModal setLoggedIn={setLoggedIn} />}
 
@@ -27,15 +29,12 @@ export default function HomePage({ session }) {
       {/* Menú lateral */}
       {loggedIn && (
         <div className="bottom-buttons">
-
           <button onClick={() => navigate("/galeria")}>
             Galeria d'imatges
           </button>
-
           <button onClick={() => navigate("/videos")}>
             Vídeos
           </button>
-
           <button
             onClick={() =>
               window.open(
@@ -46,20 +45,20 @@ export default function HomePage({ session }) {
           >
             Resultats i classificació
           </button>
-	  <button onClick={() => navigate("/Estadistica")}>
-            Estadistica
-          </button>
+
+          {canSeeStats && (
+            <button onClick={() => navigate("/Estadistica")}>
+              Estadistica
+            </button>
+          )}
 
           {role === "admin" && (
             <button onClick={() => navigate("/admin")}>
               Panel Admin
             </button>
           )}
-
         </div>
       )}
-
     </div>
   );
 }
-
