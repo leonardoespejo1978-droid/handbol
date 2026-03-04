@@ -18,7 +18,10 @@
     transform: translateX(0);
   }
 }
-
+  .home h1,
+  .home h2 {
+    color: #FFFFFF !important;
+}
 .home {
   position: relative;
   min-height: 100vh;
