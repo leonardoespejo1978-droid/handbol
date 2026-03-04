@@ -17,10 +17,10 @@
   display: grid;
   grid-template-rows: repeat(3, auto);
   grid-auto-flow: column;
-  gap: 25px 30px;
+  gap: 15px 30px;
   justify-content: start;
   padding-left: 20px;
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .pro-background h1 {

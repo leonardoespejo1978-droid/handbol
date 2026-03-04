@@ -6,12 +6,15 @@ export default function Galeria() {
   const navigate = useNavigate();
 
   const botones = [
-    { image: "/assets/Jornada_1.jpg", text: "Jornada 1", url: "https://next.nubeespesan.duckdns.org/s/ooN3Bn2ZQnWk25y" },
-    { image: "/assets/Jornada_2.jpg", text: "Jornada 2", url: "https://next.nubeespesan.duckdns.org/s/7TqdxBCXsb4Ps8T" },
-    { image: "/assets/Jornada_3.jpg", text: "Jornada 3", url: "https://next.nubeespesan.duckdns.org/s/bJzfT4njJY34r4L" },
-    { image: "/assets/Jornada_4.jpg", text: "Jornada 4", url: "https://next.nubeespesan.duckdns.org/s/owjLbpnc8HYdoEy" },
-    { image: "/assets/Jornada_5.jpg", text: "Jornada 5", url: "https://next.nubeespesan.duckdns.org/s/Cbd8Sj2fdLPfdeg" },
-    { image: "/assets/Jornada_6.jpg", text: "Jornada 6", url: "https://next.nubeespesan.duckdns.org/s/KG5pLfsTpCBDZc4" },
+    { image: "/assets/Jornada_1.jpg", text: "Jornada 1\nFCB-PALAUTORDERA", url: "https://next.nubeespesan.duckdns.org/s/ooN3Bn2ZQnWk25y" },
+    { image: "/assets/Jornada_2.jpg", text: "Jornada 2\nST. CUGAT-FCB", url: "https://next.nubeespesan.duckdns.org/s/7TqdxBCXsb4Ps8T" },
+    { image: "/assets/Jornada_3.jpg", text: "Jornada 3\nFCB-SANT QUIRZE", url: "https://next.nubeespesan.duckdns.org/s/bJzfT4njJY34r4L" },
+    { image: "/assets/Jornada_4.jpg", text: "Jornada 4\nVIROLAI-FCB", url: "https://next.nubeespesan.duckdns.org/s/owjLbpnc8HYdoEy" },
+    { image: "/assets/Jornada_5.jpg", text: "Jornada 5\nFCB-CREU ALTA", url: "https://next.nubeespesan.duckdns.org/s/Cbd8Sj2fdLPfdeg" },
+    { image: "/assets/Jornada_6.jpg", text: "Jornada 6\nESPLUGUES-FCB", url: "https://next.nubeespesan.duckdns.org/s/KG5pLfsTpCBDZc4" },
+    { image: "/assets/Jornada_4.jpg", text: "Jornada 7\nFCB-SARRIA", url: "" },
+    { image: "/assets/Jornada_5.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
+    { image: "/assets/Jornada_6.jpg", text: "Jornada 9\nFCB.ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
   ];
 
   return (
