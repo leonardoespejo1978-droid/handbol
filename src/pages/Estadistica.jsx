@@ -356,6 +356,7 @@ export default function Estadistica() {
     title:   { fontSize: isMobile ? "16px" : "20px", fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1.3 },
     sub:     { fontSize: "11px", color: C.muted, marginTop: "2px" },
     backBtn: { background: "transparent", border: `1px solid ${C.border}`, color: C.muted, padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" },
+    helpBtn: { background: `${C.accent2}22`, border: `1px solid ${C.accent2}`, color: C.accent2, padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap", fontWeight: 600 },
 
     // Tabs — en móvil scroll horizontal
     tabsWrap: { overflowX: "auto", WebkitOverflowScrolling: "touch", marginBottom: "18px", paddingBottom: "2px" },
@@ -433,6 +434,7 @@ export default function Estadistica() {
           <div style={S.sub}>Fase 3 · Temporada 25/26 · {rawData.length} registres</div>
         </div>
         <button style={S.backBtn} onClick={() => navigate("/")}>← Enrere</button>
+        <button style={S.helpBtn} onClick={() => window.open("/Manual_estadistica_web.pdf", "_blank")}>📖 Ajuda</button>
       </div>
 
       {/* Tabs — scrollables en móvil */}
