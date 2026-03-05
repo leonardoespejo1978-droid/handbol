@@ -14,12 +14,20 @@ export default function Videos() {
     { image: "/assets/Jornada_6.jpg", text: "Jornada 6\nESPLUGUES-FCB", url: "https://next.nubeespesan.duckdns.org/s/We5maWPRBdkBxjE" },
     { image: "/assets/Jornada_7.jpg", text: "Jornada 7\nFCB-SARRIA", url: "https://next.nubeespesan.duckdns.org/s/7BZ3iH9jY8xdY7Y" },
     { image: "/assets/Jornada_8.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
-    { image: "/assets/Jornada_9.jpg", text: "Jornada 9\nFCB.ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/HkT8Ma8JxG4CMTM" },
+    { image: "/assets/Jornada_9.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/HkT8Ma8JxG4CMTM" },
+
   ];
 
   return (
     <div className="pro-background">
-      <h1>Vídeos</h1>
+
+      {/* Franjas decoratives blaugrana */}
+      <div className="stripe-overlay" aria-hidden="true" />
+
+      <div className="page-header">
+        <h1>Vídeos</h1>
+        <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
+      </div>
 
       <div className="button-container">
         {botones.map((btn, idx) => (
@@ -32,13 +40,12 @@ export default function Videos() {
         ))}
       </div>
 
-      {/* BOTÓN ENRRERE */}
-      <button 
+      <button
         className="back-button"
         onClick={() => navigate("/")}
       >
-        Enrere
         <span className="arrow">←</span>
+        Enrere
       </button>
     </div>
   );

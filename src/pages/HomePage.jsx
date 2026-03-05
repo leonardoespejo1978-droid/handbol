@@ -21,7 +21,7 @@ export default function HomePage({ session }) {
       <div className="home-center-text">
         <h1>Infantil A FC BARCELONA Handbol</h1>
         <h2>
-          <br /><br />Benvinguts al contingut multimedia exclusiu per l'equip de la secció <br />
+          <br /><br /><br />Benvinguts al contingut multimedia exclusiu per l'equip de la secció <br />
           d'handbol del FC BARCELONA
         </h2>
       </div>
@@ -29,12 +29,19 @@ export default function HomePage({ session }) {
       {/* Menú lateral */}
       {loggedIn && (
         <div className="bottom-buttons">
+
           <button onClick={() => navigate("/galeria")}>
+            <span className="btn-icon">🖼️</span>
             Galeria d'imatges
+            <span className="btn-arrow">›</span>
           </button>
+
           <button onClick={() => navigate("/videos")}>
+            <span className="btn-icon">🎬</span>
             Vídeos
+            <span className="btn-arrow">›</span>
           </button>
+
           <button
             onClick={() =>
               window.open(
@@ -43,20 +50,27 @@ export default function HomePage({ session }) {
               )
             }
           >
+            <span className="btn-icon">🏆</span>
             Resultats i classificació
+            <span className="btn-arrow">›</span>
           </button>
 
           {canSeeStats && (
             <button onClick={() => navigate("/Estadistica")}>
+              <span className="btn-icon">📊</span>
               Estadistica
+              <span className="btn-arrow">›</span>
             </button>
           )}
 
           {role === "admin" && (
-            <button onClick={() => navigate("/admin")}>
+            <button className="btn-admin" onClick={() => navigate("/admin")}>
+              <span className="btn-icon">⚙️</span>
               Panel Admin
+              <span className="btn-arrow">›</span>
             </button>
           )}
+
         </div>
       )}
     </div>

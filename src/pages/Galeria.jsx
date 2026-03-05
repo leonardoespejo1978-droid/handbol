@@ -14,12 +14,19 @@ export default function Galeria() {
     { image: "/assets/Jornada_6.jpg", text: "Jornada 6\nESPLUGUES-FCB", url: "https://next.nubeespesan.duckdns.org/s/KG5pLfsTpCBDZc4" },
     { image: "/assets/Jornada_4.jpg", text: "Jornada 7\nFCB-SARRIA", url: "" },
     { image: "/assets/Jornada_5.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
-    { image: "/assets/Jornada_6.jpg", text: "Jornada 9\nFCB.ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
+    { image: "/assets/Jornada_6.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
   ];
 
   return (
     <div className="pro-background">
-      <h1>galeria d'imatges</h1>
+
+      {/* Franjas decoratives blaugrana */}
+      <div className="stripe-overlay" aria-hidden="true" />
+
+      <div className="page-header">
+        <h1>Galeria d'imatges</h1>
+        <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
+      </div>
 
       <div className="button-container">
         {botones.map((btn, idx) => (
@@ -32,13 +39,12 @@ export default function Galeria() {
         ))}
       </div>
 
-      {/* BOTÓN ENRRERE */}
-      <button 
+      <button
         className="back-button"
         onClick={() => navigate("/")}
       >
-        Enrere
         <span className="arrow">←</span>
+        Enrere
       </button>
     </div>
   );
