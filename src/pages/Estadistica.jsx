@@ -150,7 +150,7 @@ export default function Estadistica() {
       if (!map[r.Jugador]) map[r.Jugador] = {
         Jugador: r.Jugador, partits: 0, partitsJugats: 0,
         Goles: 0, "Lanzam.": 0, Asistencia: 0, "Recup.": 0,
-        Exclusión: 0, Pase: 0, Área: 0, PenaltiProvocado: 0, "Exclusión +": 0,
+        Exclusión: 0, Pase: 0, Área: 0, Pasos: 0, Otro: 0, PenaltiProvocado: 0, "Exclusión +": 0,
       };
       const m = map[r.Jugador];
       m.partits++;
@@ -162,6 +162,8 @@ export default function Estadistica() {
       m.Exclusión        += r["Exclusión"] || 0;
       m.Pase             += r.Pase || 0;
       m.Área             += r.Área || 0;
+      m.Pasos            += r.Pasos || 0;
+      m.Otro             += r.Otro || 0;
       m.PenaltiProvocado += r.PenaltiProvocado || 0;
       m["Exclusión +"]   += r["Exclusión +"] || 0;
     });
@@ -189,7 +191,7 @@ export default function Estadistica() {
       (filtreRival === "Tots" || r.rival === filtreRival));
     const map = {};
     allJugs.forEach(r => {
-      if (!map[r.Jugador]) map[r.Jugador] = { Goles:0,"Lanzam.":0,Asistencia:0,"Recup.":0,PenaltiProvocado:0,"Exclusión +":0, partitsJugats:0 };
+      if (!map[r.Jugador]) map[r.Jugador] = { Goles:0,"Lanzam.":0,Asistencia:0,"Recup.":0,PenaltiProvocado:0,"Exclusión +":0,Exclusión:0,Pase:0,Área:0,Pasos:0,Otro:0, partitsJugats:0 };
       const m = map[r.Jugador];
       if (haJugat(r)) m.partitsJugats++;
       m.Goles            += r.Goles || 0;
@@ -198,6 +200,11 @@ export default function Estadistica() {
       m["Recup."]        += r["Recup."] || 0;
       m.PenaltiProvocado += r.PenaltiProvocado || 0;
       m["Exclusión +"]   += r["Exclusión +"] || 0;
+      m.Exclusión        += r["Exclusión"] || 0;
+      m.Pase             += r.Pase || 0;
+      m.Área             += r.Área || 0;
+      m.Pasos            += r.Pasos || 0;
+      m.Otro             += r.Otro || 0;
     });
     return Object.values(map).map(m => ({
       ...m,
@@ -233,44 +240,76 @@ export default function Estadistica() {
     if (filtreJugador === "Tots") return [];
     const isPorter = getPosicion(filtreJugador) === "PORTERO";
     if (isPorter) {
+      // Porters positiu: Parades, Lanzam., Assistències
       const j = statsPerPorter.find(r => r.Jugador === filtreJugador);
       if (!j) return [];
-      // Màxims sobre TOTS els porters (sense filtre de jugador)
       const allPorters = rawData.filter(r => r.POSICION === "PORTERO" &&
         (filtreJornada === "Totes" || r.JORNADA === Number(filtreJornada)) &&
         (filtreRival === "Tots" || r.rival === filtreRival));
       const porterMap = {};
       allPorters.forEach(r => {
-        if (!porterMap[r.Jugador]) porterMap[r.Jugador] = { Paradas:0,"Lanzam.":0,GC:0,Asistencia:0,Pase:0 };
+        if (!porterMap[r.Jugador]) porterMap[r.Jugador] = { Paradas:0,"Lanzam.":0,Asistencia:0 };
         const m = porterMap[r.Jugador];
-        m.Paradas += r.Paradas || 0;
+        m.Paradas    += r.Paradas || 0;
         m["Lanzam."] += r["Lanzam."] || 0;
-        m.GC += Math.max(0, (r["Lanzam."]||0) - (r.Paradas||0));
         m.Asistencia += r.Asistencia || 0;
-        m.Pase += r.Pase || 0;
       });
       const allP = Object.values(porterMap);
       const mx = k => Math.max(...allP.map(x => x[k] || 0), 1);
       return [
-        { stat: "Parades",    val: Math.round((j.Paradas / mx("Paradas")) * 100) },
-        { stat: "Lanz. reb.", val: Math.round((j["Lanzam."] / mx("Lanzam.")) * 100) },
-        { stat: "Efic. %",   val: j.eficiencia },
-        { stat: "Assistèn.", val: Math.round((j.Asistencia / Math.max(mx("Asistencia"),1)) * 100) },
-        { stat: "GC",        val: mx("GC") > 0 ? Math.round((j.GC / mx("GC")) * 100) : 0 },
-        { stat: "Passe",     val: Math.round((j.Pase / Math.max(mx("Pase"),1)) * 100) },
+        { stat: "Parades",    val: Math.round((j.Paradas      / mx("Paradas"))    * 100) },
+        { stat: "Lanz. reb.", val: Math.round((j["Lanzam."]   / mx("Lanzam."))   * 100) },
+        { stat: "Assistèn.",  val: Math.round((j.Asistencia   / mx("Asistencia")) * 100) },
       ];
     }
-    // Jugador de camp: màxim sempre sobre tots els jugadors (statsPerJugadorTots)
+    // Jugadors positiu: Goles, Lanzam., Asistencia, Recup., Exclusión+, PenaltiProvocado
     const j = statsPerJugador.find(r => r.Jugador === filtreJugador);
     if (!j) return [];
     const mx = k => Math.max(...statsPerJugadorTots.map(x => x[k] || 0), 1);
     return [
-      { stat: "Goles",       val: Math.round((j.Goles / mx("Goles")) * 100) },
-      { stat: "Lanzam.",     val: Math.round((j["Lanzam."] / mx("Lanzam.")) * 100) },
-      { stat: "Efic. %",    val: j.eficiencia },
-      { stat: "Assistèn.",  val: Math.round((j.Asistencia / mx("Asistencia")) * 100) },
-      { stat: "Recup.",     val: Math.round((j["Recup."] / mx("Recup.")) * 100) },
-      { stat: "Exc. Prov.", val: Math.round((j["Exclusión +"] / mx("Exclusión +")) * 100) },
+      { stat: "Goles",       val: Math.round((j.Goles              / mx("Goles"))            * 100) },
+      { stat: "Lanzam.",     val: Math.round((j["Lanzam."]         / mx("Lanzam."))         * 100) },
+      { stat: "Assistèn.",   val: Math.round((j.Asistencia         / mx("Asistencia"))        * 100) },
+      { stat: "Recup.",      val: Math.round((j["Recup."]          / mx("Recup."))           * 100) },
+      { stat: "Exc. Prov.",  val: Math.round((j["Exclusión +"]     / mx("Exclusión +"))      * 100) },
+      { stat: "Pen. Prov.",  val: Math.round((j.PenaltiProvocado   / mx("PenaltiProvocado")) * 100) },
+    ];
+  }, [filtreJugador, statsPerJugador, statsPerJugadorTots, statsPerPorter, rawData, filtreJornada, filtreRival]);
+
+  // Radar accions negatives — 0% = cap acció negativa, 100% = el jugador/porter amb més accions
+  const radarDataNegatiu = useMemo(() => {
+    if (filtreJugador === "Tots") return [];
+    const isPorter = getPosicion(filtreJugador) === "PORTERO";
+    if (isPorter) {
+      // Porters negatiu: Goles encaixats (Goles al Excel = gols encaixats), Pase
+      const j = statsPerPorter.find(r => r.Jugador === filtreJugador);
+      if (!j) return [];
+      const allPorters = rawData.filter(r => r.POSICION === "PORTERO" &&
+        (filtreJornada === "Totes" || r.JORNADA === Number(filtreJornada)) &&
+        (filtreRival === "Tots" || r.rival === filtreRival));
+      const porterMap = {};
+      allPorters.forEach(r => {
+        if (!porterMap[r.Jugador]) porterMap[r.Jugador] = { GC:0, Pase:0 };
+        porterMap[r.Jugador].GC   += Math.max(0, (r["Lanzam."]||0) - (r.Paradas||0));
+        porterMap[r.Jugador].Pase += r.Pase || 0;
+      });
+      const allP = Object.values(porterMap);
+      const mx = k => Math.max(...allP.map(x => x[k] || 0), 1);
+      return [
+        { stat: "Gols encaix.", val: mx("GC")   > 0 ? Math.round((j.GC   / mx("GC"))   * 100) : 0 },
+        { stat: "Pèrd. Passe",  val: mx("Pase") > 0 ? Math.round((j.Pase / mx("Pase")) * 100) : 0 },
+      ];
+    }
+    // Jugadors negatiu: Exclusión, Pase, Área, Pasos, Otro
+    const j = statsPerJugador.find(r => r.Jugador === filtreJugador);
+    if (!j) return [];
+    const mx = k => Math.max(...statsPerJugadorTots.map(x => x[k] || 0), 1);
+    return [
+      { stat: "Exclusions",  val: mx("Exclusión") > 0 ? Math.round((j.Exclusión / mx("Exclusión")) * 100) : 0 },
+      { stat: "Pèrd. Passe", val: mx("Pase")      > 0 ? Math.round((j.Pase      / mx("Pase"))      * 100) : 0 },
+      { stat: "Pèrd. Àrea",  val: mx("Área")      > 0 ? Math.round((j.Área      / mx("Área"))      * 100) : 0 },
+      { stat: "Passos",      val: mx("Pasos")     > 0 ? Math.round((j.Pasos     / mx("Pasos"))     * 100) : 0 },
+      { stat: "Altres",      val: mx("Otro")      > 0 ? Math.round((j.Otro      / mx("Otro"))      * 100) : 0 },
     ];
   }, [filtreJugador, statsPerJugador, statsPerJugadorTots, statsPerPorter, rawData, filtreJornada, filtreRival]);
 
@@ -603,25 +642,48 @@ export default function Estadistica() {
           );
         })()}
 
-        {/* Radar + Taula — siempre en columna en móvil */}
+        {/* Radar positiu + negatiu — costat a costat en desktop, columna en mòbil */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {filtreJugador !== "Tots" && radarData.length > 0 && (
-            <div style={S.card}>
-              <div style={S.cardT}>Perfil — {filtreJugador}</div>
-              <div style={{ fontSize:"10px", color:C.muted, marginBottom:"8px", marginTop:"-6px" }}>
-                Valors percentuals respecte al millor de l'equip en cada categoria (100% = màxim del equip)
-              </div>
-              <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke={C.border} />
-                  <PolarAngleAxis dataKey="stat" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 11 }} />
-                  <PolarRadiusAxis domain={[0,100]} tick={{ fill:C.muted, fontSize:9 }} tickCount={4} axisLine={false} />
-                  <Radar dataKey="val" stroke={C.accent} fill={C.accent} fillOpacity={0.25}
-                    label={{ position:"insideTopRight", fill:C.accent, fontSize:10, formatter: v => v > 0 ? `${v}%` : "" }} />
-                  <Tooltip contentStyle={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, fontSize:"12px" }}
-                    formatter={(v) => [`${v}%`, "Vs. millor equip"]} />
-                </RadarChart>
-              </ResponsiveContainer>
+          {filtreJugador !== "Tots" && (radarData.length > 0 || radarDataNegatiu.length > 0) && (
+            <div style={{ display: "flex", gap: "14px", flexDirection: isMobile ? "column" : "row" }}>
+              {radarData.length > 0 && (
+                <div style={{ ...S.card, flex: 1, marginBottom: 0 }}>
+                  <div style={S.cardT}>⬆ Accions positives — {filtreJugador}</div>
+                  <div style={{ fontSize:"10px", color:C.muted, marginBottom:"8px", marginTop:"-6px" }}>
+                    100% = màxim de l'equip en cada categoria
+                  </div>
+                  <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke={C.border} />
+                      <PolarAngleAxis dataKey="stat" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 11 }} />
+                      <PolarRadiusAxis domain={[0,100]} tick={{ fill:C.muted, fontSize:9 }} tickCount={4} axisLine={false} />
+                      <Radar dataKey="val" stroke={C.accent3} fill={C.accent3} fillOpacity={0.25}
+                        label={{ position:"insideTopRight", fill:C.accent3, fontSize:10, formatter: v => v > 0 ? `${v}%` : "" }} />
+                      <Tooltip contentStyle={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, fontSize:"12px" }}
+                        formatter={(v) => [`${v}%`, "Vs. millor equip"]} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {radarDataNegatiu.length > 0 && (
+                <div style={{ ...S.card, flex: 1, marginBottom: 0 }}>
+                  <div style={S.cardT}>⬇ Accions negatives — {filtreJugador}</div>
+                  <div style={{ fontSize:"10px", color:C.muted, marginBottom:"8px", marginTop:"-6px" }}>
+                    0% = cap acció negativa · 100% = el jugador amb més accions de l'equip
+                  </div>
+                  <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
+                    <RadarChart data={radarDataNegatiu}>
+                      <PolarGrid stroke={C.border} />
+                      <PolarAngleAxis dataKey="stat" tick={{ fill:C.muted, fontSize: isMobile ? 10 : 11 }} />
+                      <PolarRadiusAxis domain={[0,100]} tick={{ fill:C.muted, fontSize:9 }} tickCount={4} axisLine={false} />
+                      <Radar dataKey="val" stroke={C.accent} fill={C.accent} fillOpacity={0.25}
+                        label={{ position:"insideTopRight", fill:C.accent, fontSize:10, formatter: v => v > 0 ? `${v}%` : "" }} />
+                      <Tooltip contentStyle={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, fontSize:"12px" }}
+                        formatter={(v) => [`${v}%`, "Vs. jugador amb més accions"]} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           )}
 
