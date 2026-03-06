@@ -34,11 +34,7 @@ function useIsMobile() {
   return isMobile;
 }
 
-export default function Estadistica({
-  arxiu = "LLIGA INFANTIL MASCULI 3FASE 25_26",
-  titol = "Estadístiques — Lliga Infantil Masculí",
-  subtitol = "Fase 3 · Temporada 25/26",
-}) {
+export default function Estadistica() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [rawData, setRawData] = useState([]);
@@ -62,8 +58,8 @@ export default function Estadistica({
   useEffect(() => {
     const load = async () => {
       try {
-        let response = await fetch(`/${arxiu}.xlsm`);
-        if (!response.ok) response = await fetch(`/${arxiu}.xlsx`);
+        let response = await fetch("/LLIGA INFANTIL MASCULI 3FASE 25_26.xlsm");
+        if (!response.ok) response = await fetch("/LLIGA INFANTIL MASCULI 3FASE 25_26.xlsx");
         if (!response.ok) throw new Error(`Arxiu no trobat (${response.status}). Comprova que estigui a /public`);
         const buffer = await response.arrayBuffer();
         const wb = XLSX.read(buffer, { type: "array", cellDates: true });
@@ -461,9 +457,9 @@ export default function Estadistica({
         <p style={{ color: C.accent, fontWeight: 600, margin: "12px 0 8px" }}>Error carregant el fitxer</p>
         <p style={{ color: C.muted, fontSize: "13px", marginBottom: "16px" }}>{error}</p>
         <p style={{ color: C.muted, fontSize: "12px", background: `${C.border}44`, padding: "12px", borderRadius: "8px", textAlign: "left" }}>
-          📁 El fitxer <strong style={{ color: C.text }}>{arxiu}.xlsm</strong> ha d'estar a la carpeta <strong style={{ color: C.text }}>/public</strong>.
+          📁 El fitxer <strong style={{ color: C.text }}>LLIGA INFANTIL MASCULI 3FASE 25_26.xlsm</strong> ha d'estar a la carpeta <strong style={{ color: C.text }}>/public</strong>.
         </p>
-        <button style={{ ...S.backBtn, marginTop: "16px" }} onClick={() => navigate("/EstadisticaSelector")}>← Enrere</button>
+        <button style={{ ...S.backBtn, marginTop: "16px" }} onClick={() => navigate("/")}>← Enrere</button>
       </div>
     </div>
   );
@@ -473,10 +469,11 @@ export default function Estadistica({
       {/* Header */}
       <div style={S.header}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={S.title}>📊 {titol}</div>
-          <div style={S.sub}>{subtitol} · {rawData.length} registres</div>
+          <div style={S.title}>📊 Estadístiques — Lliga Infantil Masculí</div>
+          <div style={S.sub}>Fase 3 · Temporada 25/26 · {rawData.length} registres</div>
         </div>
-        <button style={S.backBtn} onClick={() => navigate("/EstadisticaSelector")}>← Enrere</button>
+        <button style={S.backBtn} onClick={() => navigate("/")}>← Enrere</button>
+        <button style={S.helpBtn} onClick={() => window.open("/Manual_estadistica_web.pdf", "_blank")}>📖 Ajuda</button>
       </div>
 
       {/* Tabs — scrollables en móvil */}

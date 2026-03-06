@@ -56,7 +56,7 @@ export default function HomePage({ session }) {
           </button>
 
           {canSeeStats && (
-            <button onClick={() => navigate("/EstadisticaSelector")}>
+            <button onClick={() => navigate("/Estadistica")}>
               <span className="btn-icon">📊</span>
               Estadistica
               <span className="btn-arrow">›</span>
