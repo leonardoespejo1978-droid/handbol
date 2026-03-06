@@ -8,7 +8,7 @@ export default function Videos() {
   const botones = [
     { image: "/assets/Jornada_1.jpg", text: "Jornada 1\nFCB-PALAUTORDERA", url: "https://next.nubeespesan.duckdns.org/s/SJcW7LYRkyD8wfk" },
     { image: "/assets/Jornada_2.jpg", text: "Jornada 2\nST. CUGAT-FCB", url: "https://next.nubeespesan.duckdns.org/s/BrzsgYBRJtdpMRJ" },
-    { image: "/assets/Jornada_3.jpg", text: "Jornada 3\nFCB-SANT QUIRZE", url: "https://next.nubeespesan.duckdns.org/s/DsyZziiTMcf63mC" },
+    { image: "/assets/Jornada_3.jpg", text: "Jornada 3\nFCB-SANT QUIRZE", url: "https://next.nubeespesan.duckdns.org/s/6rxF9zS5QPHWn6m" },
     { image: "/assets/Jornada_4.jpg", text: "Jornada 4\nVIROLAI-FCB", url: "https://next.nubeespesan.duckdns.org/s/xtFrWEP5sGgXrJm" },
     { image: "/assets/Jornada_5.jpg", text: "Jornada 5\nFCB-CREU ALTA", url: "https://next.nubeespesan.duckdns.org/s/CepnAibnXnXGbXg" },
     { image: "/assets/Jornada_6.jpg", text: "Jornada 6\nESPLUGUES-FCB", url: "https://next.nubeespesan.duckdns.org/s/We5maWPRBdkBxjE" },
