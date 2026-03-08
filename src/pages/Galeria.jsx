@@ -12,9 +12,10 @@ export default function Galeria() {
     { image: "/assets/Jornada_4.jpg", text: "Jornada 4\nVIROLAI-FCB", url: "https://next.nubeespesan.duckdns.org/s/owjLbpnc8HYdoEy" },
     { image: "/assets/Jornada_5.jpg", text: "Jornada 5\nFCB-CREU ALTA", url: "https://next.nubeespesan.duckdns.org/s/Cbd8Sj2fdLPfdeg" },
     { image: "/assets/Jornada_6.jpg", text: "Jornada 6\nESPLUGUES-FCB", url: "https://next.nubeespesan.duckdns.org/s/KG5pLfsTpCBDZc4" },
-    { image: "/assets/Jornada_4.jpg", text: "Jornada 7\nFCB-SARRIA", url: "" },
-    { image: "/assets/Jornada_5.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
-    { image: "/assets/Jornada_6.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
+    { image: "/assets/Jornada_7.jpg", text: "Jornada 7\nFCB-SARRIA", url: "" },
+    { image: "/assets/Jornada_8.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
+    { image: "/assets/Jornada_9.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
+    { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH.ST. QUIRZE-FCB", url: "https://next.nubeespesan.duckdns.org/s/Cgfdfy84nnRraC3" },
   ];
 
   return (

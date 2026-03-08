@@ -21,8 +21,8 @@ export default function HomePage({ session }) {
       <div className="home-center-text">
         <h1>Infantil A FC BARCELONA Handbol</h1>
         <h2>
-          <br /><br /><br />Benvinguts al contingut multimedia exclusiu per l'equip de la secció <br />
-          d'handbol del FC BARCELONA
+          <br /><br /><br />Benvinguts al contingut multimedia exclusiu per l'equip <br />
+          Infantil A de la secció d'handbol del FC BARCELONA
         </h2>
       </div>
 

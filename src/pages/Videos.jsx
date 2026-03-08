@@ -15,6 +15,7 @@ export default function Videos() {
     { image: "/assets/Jornada_7.jpg", text: "Jornada 7\nFCB-SARRIA", url: "https://next.nubeespesan.duckdns.org/s/7BZ3iH9jY8xdY7Y" },
     { image: "/assets/Jornada_8.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
     { image: "/assets/Jornada_9.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/HkT8Ma8JxG4CMTM" },
+    { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH. ST. QUIRZE-FCB", url: "https://next.nubeespesan.duckdns.org/s/cwd2gMcBnFNZFRg" },
 
   ];
 
