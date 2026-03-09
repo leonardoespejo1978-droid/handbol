@@ -352,20 +352,35 @@ export default function Estadistica({
       const porters = rows.filter(r => r.POSICION === "PORTERO");
       const jugs    = rows.filter(r => r.POSICION === "JUGADOR");
       const gf      = sum(jugs, "Goles");
-      // GC = sum of (Lanzam. - Paradas) per porter, only when they played (Lanzam. > 0)
       const gc      = porters.reduce((acc, p) => {
         const lanzReb = p["Lanzam."] || 0;
         const par = p.Paradas || 0;
         return acc + Math.max(0, lanzReb - par);
       }, 0);
-      const lanz    = sum(jugs, "Lanzam.");
-      const parades = sum(porters, "Paradas");
+      const lanz       = sum(jugs, "Lanzam.");
+      const parades    = sum(porters, "Paradas");
       const lanzRebuts = porters.reduce((acc, p) => acc + (p["Lanzam."] || 0), 0);
-      // Keep full rival string (includes L/V suffix) for unique identification
+      // Accions positives equip
+      const assistencies   = sum(jugs, "Asistencia");
+      const recuperacions  = sum(jugs, "Recup.");
+      const exclusionsPos  = sum(jugs, "Exclusión +");
+      const penaltisProvocats = sum(jugs, "PenaltiProvocado");
+      // Accions negatives equip
+      const perdaPasse     = sum(jugs, "Pase") + sum(porters, "Pase");
+      const passos         = sum(jugs, "Pasos");
+      const area           = sum(jugs, "Área");
+      const exclusions     = sum(jugs, "Exclusión");
+      const altres         = sum(jugs, "Otro");
       const rivalRaw = rows[0]?.rival || "";
       const rivalNet = rivalRaw.replace(/\s*\([LV]\)\s*$/i, "").trim();
       const lv      = rows[0]?.["L/V"] || "";
-      return { jornada: `J${j}`, rival: rivalNet, rivalRaw, lv, gf, gc, lanz, parades, lanzRebuts, efic: lanz ? Math.round((gf/lanz)*100) : 0, eficPort: lanzRebuts ? Math.round((parades/lanzRebuts)*100) : 0 };
+      return {
+        jornada: `J${j}`, rival: rivalNet, rivalRaw, lv, gf, gc, lanz, parades, lanzRebuts,
+        efic: lanz ? Math.round((gf/lanz)*100) : 0,
+        eficPort: lanzRebuts ? Math.round((parades/lanzRebuts)*100) : 0,
+        assistencies, recuperacions, exclusionsPos, penaltisProvocats,
+        perdaPasse, passos, area, exclusions, altres,
+      };
     });
   }, [rawData]);
 
@@ -867,20 +882,226 @@ export default function Estadistica({
           </div>
         </div>
         {(() => {
-          const data = filtreJornada === "Totes" ? statsEquipPerJornada : statsEquipPerJornada.filter(r => r.jornada===`J${filtreJornada}`);
-          const totalGF  = sum(data,"gf");
-          const totalGC  = sum(data,"gc");
-          const totalLanz= sum(data,"lanz");
-          const totalPar = sum(data,"parades");
-          const eficAtac = totalLanz ? Math.round((totalGF/totalLanz)*100) : 0;
-          const totalLanzRebuts = sum(data,"lanzRebuts");
-          const eficPort = totalLanzRebuts ? Math.round((totalPar/totalLanzRebuts)*100) : 0;
+          const isSingleGame = filtreJornada !== "Totes";
+          const data = isSingleGame ? statsEquipPerJornada.filter(r => r.jornada===`J${filtreJornada}`) : statsEquipPerJornada;
+          const allData = statsEquipPerJornada; // sempre tota la temporada per calcular mitges
+          const n = allData.length || 1;
+          const avg = (key) => +(sum(allData, key) / n).toFixed(1);
+
+          // Totals del filtre actual
+          const totalGF   = sum(data,"gf");
+          const totalGC   = sum(data,"gc");
+          const totalLanz = sum(data,"lanz");
+          const totalPar  = sum(data,"parades");
+          const totalLanzR= sum(data,"lanzRebuts");
+          const eficAtac  = totalLanz ? Math.round((totalGF/totalLanz)*100) : 0;
+          const eficPort  = totalLanzR ? Math.round((totalPar/totalLanzR)*100) : 0;
+          // Accions positives totals
+          const totalAss  = sum(data,"assistencies");
+          const totalRec  = sum(data,"recuperacions");
+          const totalExcP = sum(data,"exclusionsPos");
+          const totalPenP = sum(data,"penaltisProvocats");
+          const totalPos  = totalAss + totalRec + totalExcP + totalPenP;
+          // Accions negatives totals
+          const totalPas  = sum(data,"perdaPasse");
+          const totalPassos= sum(data,"passos");
+          const totalArea = sum(data,"area");
+          const totalExc  = sum(data,"exclusions");
+          const totalAlt  = sum(data,"altres");
+          const totalNeg  = totalPas + totalPassos + totalArea + totalExc + totalAlt;
+
+          // Per-game avgs of the filtered data
+          const np = data.length || 1;
+          const pga = (v) => +(v/np).toFixed(1);
+
+          // Mitges temporada completa
+          const avgGF    = avg("gf");
+          const avgGC    = avg("gc");
+          const avgLanz  = avg("lanz");
+          const avgLanzR = avg("lanzRebuts");
+          const avgPar   = avg("parades");
+          const avgEficAtac = allData.length ? Math.round(sum(allData,"gf")/sum(allData,"lanz")*100||0) : 0;
+          const avgEficPort = sum(allData,"lanzRebuts") ? Math.round(sum(allData,"parades")/sum(allData,"lanzRebuts")*100) : 0;
+          const avgAss   = avg("assistencies");
+          const avgRec   = avg("recuperacions");
+          const avgExcP  = avg("exclusionsPos");
+          const avgPenP  = avg("penaltisProvocats");
+          const avgPos   = +(avgAss + avgRec + avgExcP + avgPenP).toFixed(1);
+          const avgPas   = avg("perdaPasse");
+          const avgPassos= avg("passos");
+          const avgArea  = avg("area");
+          const avgExc   = avg("exclusions");
+          const avgAlt   = avg("altres");
+          const avgNeg   = +(avgPas + avgPassos + avgArea + avgExc + avgAlt).toFixed(1);
+
+          // Style helpers for comparison table
+          const cmpPos = (val, ref) => {
+            if (val === ref) return {};
+            const better = val > ref;
+            return { color: better ? C.positive : C.negative, fontWeight: 700 };
+          };
+          const cmpNeg = (val, ref) => {
+            if (val === ref) return {};
+            const better = val < ref;
+            return { color: better ? C.positive : C.negative, fontWeight: 700 };
+          };
+          const arrow = (val, ref, isPos) => {
+            if (val === ref) return " —";
+            const better = isPos ? val > ref : val < ref;
+            return better ? " ▲" : " ▼";
+          };
+
+          const sectionTitle = (txt) => (
+            <div style={{ fontSize:"10px", fontWeight:700, color: C.muted, textTransform:"uppercase",
+              letterSpacing:"0.7px", padding:"10px 14px 4px", borderBottom:`1px solid ${C.border}` }}>{txt}</div>
+          );
+          const summaryRow = (label, val, avgVal, isPos) => (
+            <tr>
+              <td style={{ ...S.td, color: C.muted, fontSize:"12px" }}>{label}</td>
+              <td style={{ ...S.tdr, fontSize:"13px", ...(isPos ? cmpPos(val,avgVal) : cmpNeg(val,avgVal)) }}>
+                {val}{arrow(val, avgVal, isPos)}
+              </td>
+              <td style={{ ...S.tdr, fontSize:"12px", color: C.muted }}>{avgVal}</td>
+            </tr>
+          );
+
           return (<>
-            <div style={S.kpis}>
-              {[[totalGF,"Gols favor",C.positive],[totalGC,"Gols contra",C.negative],[`${eficAtac}%`,"Efic. atac",null],[`${eficPort}%`,"Efic. porteria",C.accent2],[totalPar,"Parades",C.accent3],[data.length,"Partits",C.warning]].map(([v,l,color]) => (
-                <div key={l} style={S.kpi}><div style={S.kpiVal(color)}>{v}</div><div style={S.kpiLbl}>{l}</div></div>
-              ))}
+            {/* ── CAPÇALERA RESUM ── */}
+            <div style={{ ...S.card, marginBottom:"14px" }}>
+              <div style={S.cardT}>
+                {isSingleGame
+                  ? `Resum — J${filtreJornada} vs ${data[0]?.rival || ""}`
+                  : `Resum de la temporada (${data.length} partits)`}
+              </div>
+
+              {/* Blocs principals */}
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:"10px", marginBottom:"14px" }}>
+                {[
+                  [totalGF, `Gols favor${isSingleGame?"":" (total)"}`, C.positive],
+                  [totalLanz, `Lanzaments${isSingleGame?"":" (total)"}`, C.accent2],
+                  [totalGC, `Gols contra${isSingleGame?"":" (total)"}`, C.negative],
+                  [totalLanzR, `Lanz. rebuts${isSingleGame?"":" (total)"}`, C.warning],
+                ].map(([v,l,color]) => (
+                  <div key={l} style={{ background:`${color}12`, border:`1px solid ${color}33`, borderRadius:"10px", padding:"12px", textAlign:"center" }}>
+                    <div style={{ fontSize: isMobile?"22px":"28px", fontWeight:700, color }}>{v}</div>
+                    <div style={{ fontSize:"10px", color: C.muted, marginTop:"3px" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Eficiències */}
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(2,1fr)", gap:"10px", marginBottom:"14px" }}>
+                {[
+                  [`${eficAtac}%`, "Efic. atac (% lanzaments → gol)", null],
+                  [`${eficPort}%`, "Efic. porteria (% lanzaments aturat)", C.accent2],
+                ].map(([v,l,color]) => (
+                  <div key={l} style={{ background: C.card, border:`1px solid ${C.border}`, borderRadius:"10px", padding:"12px", textAlign:"center" }}>
+                    <div style={{ fontSize: isMobile?"20px":"24px", fontWeight:700, color: color || C.accent }}>{v}</div>
+                    <div style={{ fontSize:"10px", color: C.muted, marginTop:"3px" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Accions positives */}
+              <div style={{ marginBottom:"10px" }}>
+                <div style={{ fontSize:"10px", fontWeight:700, color: C.positive, textTransform:"uppercase",
+                  letterSpacing:"0.6px", marginBottom:"8px", display:"flex", alignItems:"center", gap:"6px" }}>
+                  <span style={{ width:"8px", height:"8px", borderRadius:"50%", background: C.positive, display:"inline-block" }}/>
+                  Accions positives — Total: <strong>{totalPos}</strong>
+                  {!isSingleGame && <span style={{ color:C.muted, fontWeight:400 }}>· Mitja/partit: {pga(totalPos)}</span>}
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:"8px" }}>
+                  {[
+                    [totalAss, "Assistències", pga(totalAss)],
+                    [totalRec, "Recuperacions", pga(totalRec)],
+                    [totalExcP, "Exclusions prov.", pga(totalExcP)],
+                    [totalPenP, "Penaltis prov.", pga(totalPenP)],
+                  ].map(([total, label, perGame]) => (
+                    <div key={label} style={{ background:`${C.positive}0f`, border:`1px solid ${C.positive}33`, borderRadius:"8px", padding:"10px", textAlign:"center" }}>
+                      <div style={{ fontSize: isMobile?"18px":"22px", fontWeight:700, color: C.positive }}>{total}</div>
+                      <div style={{ fontSize:"10px", color: C.muted, marginTop:"2px" }}>{label}</div>
+                      {!isSingleGame && <div style={{ fontSize:"9px", color:`${C.positive}aa`, marginTop:"2px" }}>{perGame}/partit</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Accions negatives */}
+              <div>
+                <div style={{ fontSize:"10px", fontWeight:700, color: C.negative, textTransform:"uppercase",
+                  letterSpacing:"0.6px", marginBottom:"8px", display:"flex", alignItems:"center", gap:"6px" }}>
+                  <span style={{ width:"8px", height:"8px", borderRadius:"50%", background: C.negative, display:"inline-block" }}/>
+                  Accions negatives — Total: <strong>{totalNeg}</strong>
+                  {!isSingleGame && <span style={{ color:C.muted, fontWeight:400 }}>· Mitja/partit: {pga(totalNeg)}</span>}
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap:"8px" }}>
+                  {[
+                    [totalPas, "Pèrd. passe", pga(totalPas)],
+                    [totalPassos, "Passos", pga(totalPassos)],
+                    [totalArea, "Àrea", pga(totalArea)],
+                    [totalExc, "Exclusions", pga(totalExc)],
+                    [totalAlt, "Altres", pga(totalAlt)],
+                  ].map(([total, label, perGame]) => (
+                    <div key={label} style={{ background:`${C.negative}0f`, border:`1px solid ${C.negative}33`, borderRadius:"8px", padding:"10px", textAlign:"center" }}>
+                      <div style={{ fontSize: isMobile?"18px":"22px", fontWeight:700, color: C.negative }}>{total}</div>
+                      <div style={{ fontSize:"10px", color: C.muted, marginTop:"2px" }}>{label}</div>
+                      {!isSingleGame && <div style={{ fontSize:"9px", color:`${C.negative}aa`, marginTop:"2px" }}>{perGame}/partit</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* ── TAULA COMPARATIVA (només quan hi ha un sol partit filtrat) ── */}
+            {isSingleGame && (
+              <div style={{ ...S.card, marginBottom:"14px" }}>
+                <div style={S.cardT}>Comparativa vs mitja de la temporada</div>
+                <div style={{ fontSize:"11px", color: C.muted, marginBottom:"12px" }}>
+                  <span style={{ color:C.positive, fontWeight:700 }}>▲ Verd</span> = millor que la mitja &nbsp;|&nbsp;
+                  <span style={{ color:C.negative, fontWeight:700 }}>▼ Vermell</span> = pitjor que la mitja
+                </div>
+                <div style={S.tableWrap}>
+                  <table style={{ ...S.table, minWidth: isMobile ? "360px" : "auto" }}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>Estadística</th>
+                        <th style={{ ...S.th, textAlign:"right" }}>Aquest partit</th>
+                        <th style={{ ...S.th, textAlign:"right" }}>Mitja temporada</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Atac */}
+                      <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("⚔️ Atac")}</td></tr>
+                      {summaryRow("Gols a favor", totalGF, avgGF, true)}
+                      {summaryRow("Lanzaments", totalLanz, avgLanz, true)}
+                      {summaryRow("% Efic. atac", eficAtac, avgEficAtac, true)}
+                      {/* Porteria */}
+                      <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("🧤 Porteria")}</td></tr>
+                      {summaryRow("Gols en contra", totalGC, avgGC, false)}
+                      {summaryRow("Lanz. rebuts", totalLanzR, avgLanzR, false)}
+                      {summaryRow("Parades", totalPar, avgPar, true)}
+                      {summaryRow("% Efic. porteria", eficPort, avgEficPort, true)}
+                      {/* Accions positives */}
+                      <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("✅ Accions positives")}</td></tr>
+                      {summaryRow("Total accions positives", totalPos, avgPos, true)}
+                      {summaryRow("Assistències", totalAss, avgAss, true)}
+                      {summaryRow("Recuperacions", totalRec, avgRec, true)}
+                      {summaryRow("Exclusions provocades", totalExcP, avgExcP, true)}
+                      {summaryRow("Penaltis provocats", totalPenP, avgPenP, true)}
+                      {/* Accions negatives */}
+                      <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("❌ Accions negatives")}</td></tr>
+                      {summaryRow("Total accions negatives", totalNeg, avgNeg, false)}
+                      {summaryRow("Pèrdua de passe", totalPas, avgPas, false)}
+                      {summaryRow("Passos", totalPassos, avgPassos, false)}
+                      {summaryRow("Àrea", totalArea, avgArea, false)}
+                      {summaryRow("Exclusions", totalExc, avgExc, false)}
+                      {summaryRow("Altres", totalAlt, avgAlt, false)}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div style={S.card}>
               <div style={S.cardT}>Evolució per jornades</div>
               <ResponsiveContainer width="100%" height={chartH}>
