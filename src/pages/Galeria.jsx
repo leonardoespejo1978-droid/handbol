@@ -16,6 +16,7 @@ export default function Galeria() {
     { image: "/assets/Jornada_8.jpg", text: "Jornada 8\nPALAUTORDERA-FCB", url: "" },
     { image: "/assets/Jornada_9.jpg", text: "Jornada 9\nFCB-ST. CUGAT", url: "https://next.nubeespesan.duckdns.org/s/GgipZWWCYCZLi2C" },
     { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH.ST. QUIRZE-FCB", url: "https://next.nubeespesan.duckdns.org/s/Cgfdfy84nnRraC3" },
+    { image: "/assets/palau_1.jpg", text: "VISITA MUSEU PALAU", url: "https://next.nubeespesan.duckdns.org/s/SxJWYNmEAbmQq7S" },
   ];
 
   return (
