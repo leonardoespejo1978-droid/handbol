@@ -18,6 +18,7 @@ export default function Galeria() {
     { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH.ST. QUIRZE-FCB",  url: "https://next.nubeespesan.duckdns.org/s/Cgfdfy84nnRraC3" },
     { image: "/assets/palau_1.jpg",    text: "Extra\nVISITA MUSEU PALAU",     url: "https://next.nubeespesan.duckdns.org/s/SxJWYNmEAbmQq7S" },
     { image: "/assets/amistos2.jpg",    text: "Extra\nAmistós Dominicos",     url: "https://next.nubeespesan.duckdns.org/s/DGTLqnZ6ybbKpH3" },
+    { image: "/assets/Jornada_11.jpg",    text: "Jornada 11\nFCB-VIROLAI VORAMAR",     url: "https://next.nubeespesan.duckdns.org/s/XxA34WnDbJX6Zkf" },
   ];
 
   return (
