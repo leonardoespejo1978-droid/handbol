@@ -19,6 +19,7 @@ export default function Galeria() {
     { image: "/assets/palau_1.jpg",    text: "Extra\nVISITA MUSEU PALAU",     url: "https://next.nubeespesan.duckdns.org/s/SxJWYNmEAbmQq7S" },
     { image: "/assets/amistos2.jpg",    text: "Extra\nAmistós Dominicos",     url: "https://next.nubeespesan.duckdns.org/s/DGTLqnZ6ybbKpH3" },
     { image: "/assets/Jornada_11.jpg",    text: "Jornada 11\nFCB-VIROLAI VORAMAR",     url: "https://next.nubeespesan.duckdns.org/s/XxA34WnDbJX6Zkf" },
+    { image: "/assets/Jornada_12.jpg",    text: "Jornada 11\nCREU ALTA-FCB",     url: "https://next.nubeespesan.duckdns.org/s/oZLmRCmKk3P3Arz" },
   ];
 
   return (
