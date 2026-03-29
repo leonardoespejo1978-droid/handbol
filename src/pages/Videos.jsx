@@ -19,6 +19,7 @@ export default function Videos() {
     { image: "/assets/amistos2.jpg", text: "Amistós\nDOMINICOS-FCB", url: "https://next.nubeespesan.duckdns.org/s/dAFfY2rPNjqyzkN" },
     { image: "/assets/Jornada_11.jpg", text: "Jornada 11\nFCB-VIROLAI VORAMAR", url: "https://next.nubeespesan.duckdns.org/s/KeajsHmekstnd9r" },
     { image: "/assets/Jornada_12.jpg", text: "Jornada 12\nCREU ALTA-FCB", url: "https://next.nubeespesan.duckdns.org/s/N2KBENPym66qoJo" },
+    { image: "/assets/Jornada_13.jpg", text: "Jornada 13\nFCB-CH ESPLUGUES", url: "https://next.nubeespesan.duckdns.org/s/PGpS3Dg8bgbiGQC" },
   ];
 
   return (
