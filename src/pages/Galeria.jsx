@@ -21,6 +21,7 @@ export default function Galeria() {
     { image: "/assets/Jornada_11.jpg",    text: "Jornada 11\nFCB-VIROLAI VORAMAR",     url: "https://next.nubeespesan.duckdns.org/s/XxA34WnDbJX6Zkf" },
     { image: "/assets/Jornada_12.jpg",    text: "Jornada 12\nCREU ALTA-FCB",     url: "https://next.nubeespesan.duckdns.org/s/oZLmRCmKk3P3Arz" },
     { image: "/assets/Jornada_13.jpg",    text: "Jornada 13\nFCB-CH ESPLUGUES",     url: "https://next.nubeespesan.duckdns.org/s/mDWwRWxZoNpDHbn" },
+    { image: "/assets/amistos3.jpg",    text: "Costa Daurada",     url: "https://next.nubeespesan.duckdns.org/s/jmD4MLCPLrBb9eS" },
   ];
   return (
     <div className="pro-background">
