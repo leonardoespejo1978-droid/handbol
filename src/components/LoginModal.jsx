@@ -16,24 +16,40 @@ export default function LoginModal({ setLoggedIn }) {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleLogin();
+  };
+
   return (
-    <div className="login-container">
-      <input
-        type="email"
-        placeholder="Correu electrònic"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        className="login-input"
-      />
-      <input
-        type="password"
-        placeholder="Contrasenya"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        className="login-input"
-      />
-      <button onClick={handleLogin} className="login-button">ACCEDIR</button>
-      {error && <p className="login-error">{error}</p>}
+    <div className="login-overlay">
+      <div className="login-container">
+        <div className="login-logo">
+          <span className="login-logo-icon">🤾</span>
+        </div>
+        <h2 className="login-title">Infantil A · FCB Handbol</h2>
+        <p className="login-subtitle">Accés exclusiu per a l'equip</p>
+
+        <input
+          type="email"
+          placeholder="Correu electrònic"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="login-input"
+          autoComplete="email"
+        />
+        <input
+          type="password"
+          placeholder="Contrasenya"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="login-input"
+          autoComplete="current-password"
+        />
+        <button onClick={handleLogin} className="login-button">ACCEDIR</button>
+        {error && <p className="login-error">{error}</p>}
+      </div>
     </div>
   );
 }

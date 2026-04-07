@@ -1,62 +1,136 @@
+/* ===== OVERLAY — cubre toda la pantalla, siempre encima ===== */
+.login-overlay {
+  position: fixed;          /* Fijo en pantalla, independiente del scroll */
+  inset: 0;                 /* top/right/bottom/left: 0 */
+  z-index: 9999;            /* Siempre por encima de todo */
+  display: flex;
+  align-items: center;      /* Centrado vertical real */
+  justify-content: center;  /* Centrado horizontal real */
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  cursor: default;          /* Cursor normal en el overlay */
+}
+
+/* ===== CAJA DEL FORMULARIO ===== */
 .login-container {
   display: flex;
   flex-direction: column;
-  width: 300px;
-  margin: 60px auto 0 auto;
-  padding: 30px;
-  background-color: #2a2a3f;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  align-items: center;
+  width: clamp(320px, 28vw, 500px);   /* Se adapta: mínimo 320px, máximo 500px */
+  padding: clamp(30px, 3vw, 50px);
+  background: linear-gradient(160deg, #1e1e32 0%, #2a2a3f 100%);
+  border: 1px solid rgba(255, 237, 0, 0.25);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(165, 0, 68, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  cursor: auto;             /* Cursor normal dentro del formulario */
+  pointer-events: auto;     /* Asegura que los clicks funcionan */
 }
 
-.login-input {
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  font-size: 14px;
+/* ===== LOGO / ICONO ===== */
+.login-logo {
+  font-size: clamp(40px, 5vw, 64px);
+  margin-bottom: 10px;
+  line-height: 1;
 }
 
-.login-input:focus {
-  box-shadow: 0 0 6px #4e5fff;
-}
-
-.login-button {
-  background-color: #4e5fff;
-  color: #fff;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.login-button:hover {
-  background-color: #6370ff;
-}
-
-.login-error {
-  margin-top: 10px;
-  color: #ff4e4e;
-  font-weight: bold;
+/* ===== TÍTULOS ===== */
+.login-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #FFED00;
+  margin: 0 0 6px 0;
   text-align: center;
 }
 
-/* ===== RESPONSIVE ===== */
+.login-subtitle {
+  font-family: 'Barlow', sans-serif;
+  font-size: clamp(12px, 1.2vw, 16px);
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 28px 0;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* ===== INPUTS ===== */
+.login-input {
+  width: 100%;
+  padding: clamp(12px, 1.2vw, 18px) clamp(14px, 1.4vw, 20px);
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  outline: none;
+  font-size: clamp(14px, 1.4vw, 20px);  /* Fuente grande en TV */
+  font-family: 'Barlow', sans-serif;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  box-sizing: border-box;
+  cursor: text;             /* Cursor tipo texto en los inputs */
+  pointer-events: auto;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.login-input:focus {
+  border-color: #FFED00;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 237, 0, 0.15);
+}
+
+/* ===== BOTÓN ===== */
+.login-button {
+  width: 100%;
+  background: linear-gradient(135deg, #A50044 0%, #6B002C 100%);
+  color: #fff;
+  padding: clamp(12px, 1.2vw, 18px);
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: none;
+  margin-top: 6px;
+  cursor: pointer;          /* Cursor de mano en el botón */
+  pointer-events: auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 20px rgba(165, 0, 68, 0.5);
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #c4005a 0%, #900038 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(165, 0, 68, 0.7);
+}
+
+.login-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(165, 0, 68, 0.4);
+}
+
+/* ===== ERROR ===== */
+.login-error {
+  margin-top: 14px;
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: clamp(13px, 1.2vw, 17px);
+  text-align: center;
+  font-family: 'Barlow', sans-serif;
+}
+
+/* ===== RESPONSIVE MÓVIL ===== */
 @media (max-width: 768px) {
   .login-container {
     width: 90%;
-    margin: 20px auto;
-    padding: 20px;
-  }
-
-  .login-input {
-    font-size: 13px;
-  }
-
-  .login-button {
-    font-size: 14px;
-    padding: 10px;
+    max-width: 380px;
+    padding: 28px 24px;
   }
 }
