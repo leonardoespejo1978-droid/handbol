@@ -22,6 +22,7 @@ export default function Videos() {
     { image: "/assets/Jornada_12.jpg", text: "Jornada 12\nCREU ALTA-FCB", url: "https://next.nubeespesan.duckdns.org/s/N2KBENPym66qoJo" },
     { image: "/assets/Jornada_13.jpg", text: "Jornada 13\nFCB-CH ESPLUGUES", url: "https://next.nubeespesan.duckdns.org/s/PGpS3Dg8bgbiGQC" },
     { image: "/assets/amistos3.jpg", text: "Amistós Costa Daurada\nFCB-DOMINICOS", url: "https://next.nubeespesan.duckdns.org/s/TrGcKark6xMQGcJ" },
+    { image: "/assets/Jornada_14.jpg", text: "Jornada_14\nUES SARRIA-FCB", url: "https://next.nubeespesan.duckdns.org/s/5nxPf5zL6Wjtgns" },
   ];
 
   return (
