@@ -2,15 +2,32 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import "./style_1.css";
+import "./submenu-videos.css";
 
 const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com", "aleix79@fcb.es"];
 
+const VIDEOS_CATEGORIES = [
+  { id: "pretemporada", label: "Pretemporada" },
+  { id: "amistosos", label: "Amistosos" },
+  { id: "drets-esportius", label: "Drets Esportius" },
+  { id: "fase-3", label: "3a Fase" },
+  { id: "fase-final", label: "Fase Final" },
+  { id: "sectores-ce", label: "Sectores CE" },
+  { id: "fase-final-ce", label: "Fase Final CE" },
+];
+
 export default function HomePage({ session }) {
   const [loggedIn, setLoggedIn] = useState(!!session);
+  const [showVideosMenu, setShowVideosMenu] = useState(false);
   const navigate = useNavigate();
   const role = session?.user?.raw_user_meta_data?.role || "user";
   const email = session?.user?.email || "";
   const canSeeStats = STATS_ALLOWED.includes(email);
+
+  const handleVideoCategory = (categoryId) => {
+    navigate(`/videos/${categoryId}`);
+    setShowVideosMenu(false);
+  };
 
   return (
     <div className="home">
@@ -36,11 +53,33 @@ export default function HomePage({ session }) {
             <span className="btn-arrow">›</span>
           </button>
 
-          <button onClick={() => navigate("/videos")}>
-            <span className="btn-icon">🎬</span>
-            Vídeos
-            <span className="btn-arrow">›</span>
-          </button>
+          {/* Botón de Vídeos con submenu flotante */}
+          <div className="videos-menu-wrapper">
+            <button
+              onClick={() => setShowVideosMenu(!showVideosMenu)}
+              className={showVideosMenu ? "videos-btn-active" : ""}
+            >
+              <span className="btn-icon">🎬</span>
+              Vídeos
+              <span className="btn-arrow">›</span>
+            </button>
+
+            {/* Submenu flotante en paralelo */}
+            {showVideosMenu && (
+              <div className="submenu-videos-floating">
+                {VIDEOS_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    className="submenu-video-item"
+                    onClick={() => handleVideoCategory(category.id)}
+                  >
+                    <span className="submenu-icon">▶</span>
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button
             onClick={() =>

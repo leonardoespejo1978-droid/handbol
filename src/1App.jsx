@@ -5,6 +5,8 @@ import HomePage from "./pages/HomePage";
 import Galeria from "./pages/Galeria";
 import Videos from "./pages/Videos";
 import Estadistica from "./pages/Estadistica";
+import EstadisticaSelector from "./pages/EstadisticaSelector";
+import EstadisticaDrets from "./pages/EstadisticaDrets";
 import AdminPanel from "./pages/AdminPanel";
 import './styleApp.css';
 
@@ -32,7 +34,9 @@ function App() {
         <Route path="/" element={<HomePage session={session} />} />
         <Route path="/galeria" element={<Galeria />} />
         <Route path="/videos" element={<Videos />} />
-        <Route path="/estadistica" element={<Estadistica />} />
+        <Route path="/EstadisticaSelector" element={<EstadisticaSelector />} />
+        <Route path="/Estadistica" element={<Estadistica />} />
+        <Route path="/EstadisticaDrets" element={<EstadisticaDrets />} />
         <Route path="/admin" element={<AdminPanel session={session} />} />
       </Routes>
     </Router>

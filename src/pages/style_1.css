@@ -11,8 +11,8 @@
   --fcb-blue-dark: #003070;
   --fcb-blue-glow: rgba(0, 77, 152, 0.5);
   --fcb-gold: #FFED00;
-  --btn-width: 260px;
-  --btn-height: 68px;
+  --btn-width: 220px;
+  --btn-height: 56px;
 }
 
 /* ===== Animación entrada menú ===== */
@@ -96,8 +96,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 22px 0 20px;
-  gap: 14px;
+  padding: 0 18px 0 16px;
+  gap: 12px;
 
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 17px;
@@ -167,7 +167,7 @@
 
 /* Icono del botón */
 .bottom-buttons button .btn-icon {
-  font-size: 20px;
+  font-size: 18px;
   flex-shrink: 0;
   transition: transform 0.3s ease;
 }
@@ -271,4 +271,31 @@
     font-size: 15px;
     letter-spacing: 1.5px;
   }
+}
+.bottom-buttons .submenu-btn {
+  width: 160px !important;
+  height: 36px !important;
+  padding: 0 12px 0 10px !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+  margin-left: 50px !important;
+  background: linear-gradient(135deg, var(--fcb-red) 0%, var(--fcb-red-dark) 100%) !important;
+  animation-delay: inherit !important;
+}
+
+.bottom-buttons .submenu-btn::before {
+  width: 2px !important;
+}
+
+.bottom-buttons .submenu-btn .btn-icon {
+  font-size: 12px !important;
+}
+
+.bottom-buttons .submenu-btn .btn-arrow {
+  display: none !important;
+}
+
+.bottom-buttons .submenu-btn:hover {
+  transform: translateX(8px) scale(1.01);
 }

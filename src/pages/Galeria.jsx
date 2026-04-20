@@ -23,6 +23,8 @@ export default function Galeria() {
     { image: "/assets/Jornada_13.jpg",    text: "Jornada 13\nFCB-CH ESPLUGUES",     url: "https://next.nubeespesan.duckdns.org/s/mDWwRWxZoNpDHbn" },
     { image: "/assets/amistos3.jpg",    text: "Costa Daurada",     url: "https://next.nubeespesan.duckdns.org/s/jmD4MLCPLrBb9eS" },
     { image: "/assets/Jornada_14.jpg",    text: "Jornada 14\nUES SARRIA-FCB",     url: "https://next.nubeespesan.duckdns.org/s/D3YinmLm9nT3XSH" },
+    { image: "/assets/semifinal_top6.jpg",    text: "TOP 6 SEMIFINAL\nFCB-ST. ESTEVE PALAUTORDERA",     url: "https://next.nubeespesan.duckdns.org/s/gX73KrCKPdo94qF" },  
+    { image: "/assets/final_top6.jpg",    text: "TOP6 FINAL\nFCB-BM GRANOLLERS",     url: "https://next.nubeespesan.duckdns.org/s/epzS7Zi53arM6Zw" },
   ];
   return (
     <div className="pro-background">
