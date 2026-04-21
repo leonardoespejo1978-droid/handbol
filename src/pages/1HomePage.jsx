@@ -4,6 +4,7 @@ import LoginModal from "../components/LoginModal";
 import "./style_1.css";
 import "./submenu-videos.css";
 
+
 const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com", "aleix79@fcb.es"];
 
 const VIDEOS_CATEGORIES = [
@@ -15,161 +16,6 @@ const VIDEOS_CATEGORIES = [
   { id: "sectores-ce", label: "Sectores CE" },
   { id: "fase-final-ce", label: "Fase Final CE" },
 ];
-
-const responsiveStyles = `
-  @media (max-width: 768px) {
-    .bottom-buttons {
-      top: 30px !important;
-      left: 10px !important;
-      gap: 8px !important;
-    }
-
-    .bottom-buttons button {
-      width: 140px !important;
-      height: 40px !important;
-      padding: 0 10px 0 8px !important;
-      gap: 6px !important;
-      font-size: 11px !important;
-      letter-spacing: 0.5px !important;
-    }
-
-    .bottom-buttons button .btn-icon {
-      font-size: 12px !important;
-    }
-
-    .bottom-buttons button .btn-arrow {
-      font-size: 11px !important;
-    }
-
-    .submenu-video-item {
-      width: 120px !important;
-      height: 34px !important;
-      padding: 0 8px 0 6px !important;
-      gap: 5px !important;
-      font-size: 10px !important;
-      letter-spacing: 0.3px !important;
-    }
-
-    .submenu-icon {
-      font-size: 11px !important;
-    }
-
-    .submenu-videos-floating {
-      gap: 5px !important;
-      margin-left: 6px !important;
-    }
-
-    .home-center-text {
-      top: 20px !important;
-    }
-
-    .home-center-text h1 {
-      font-size: 1.8rem !important;
-    }
-
-    .home-center-text h2 {
-      font-size: 0.85rem !important;
-      letter-spacing: 0px !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .bottom-buttons {
-      top: 25px !important;
-      left: 8px !important;
-      gap: 6px !important;
-    }
-
-    .bottom-buttons button {
-      width: 120px !important;
-      height: 36px !important;
-      padding: 0 8px 0 6px !important;
-      gap: 5px !important;
-      font-size: 10px !important;
-      letter-spacing: 0.3px !important;
-    }
-
-    .bottom-buttons button .btn-icon {
-      font-size: 11px !important;
-    }
-
-    .bottom-buttons button .btn-arrow {
-      font-size: 10px !important;
-    }
-
-    .submenu-video-item {
-      width: 100px !important;
-      height: 32px !important;
-      padding: 0 6px 0 5px !important;
-      gap: 4px !important;
-      font-size: 9px !important;
-      letter-spacing: 0px !important;
-    }
-
-    .submenu-icon {
-      font-size: 10px !important;
-    }
-
-    .submenu-videos-floating {
-      gap: 4px !important;
-      margin-left: 4px !important;
-    }
-
-    .home-center-text {
-      top: 15px !important;
-    }
-
-    .home-center-text h1 {
-      font-size: 1.5rem !important;
-    }
-
-    .home-center-text h2 {
-      font-size: 0.75rem !important;
-    }
-  }
-
-  @media (max-width: 360px) {
-    .bottom-buttons {
-      top: 20px !important;
-      left: 6px !important;
-      gap: 5px !important;
-    }
-
-    .bottom-buttons button {
-      width: 100px !important;
-      height: 32px !important;
-      padding: 0 6px 0 5px !important;
-      gap: 4px !important;
-      font-size: 9px !important;
-      letter-spacing: 0px !important;
-    }
-
-    .bottom-buttons button .btn-icon {
-      font-size: 10px !important;
-    }
-
-    .bottom-buttons button .btn-arrow {
-      display: none !important;
-    }
-
-    .submenu-video-item {
-      width: 85px !important;
-      height: 28px !important;
-      padding: 0 5px 0 4px !important;
-      gap: 3px !important;
-      font-size: 8px !important;
-    }
-
-    .submenu-icon {
-      font-size: 9px !important;
-    }
-
-    .submenu-videos-floating {
-      gap: 3px !important;
-      margin-left: 3px !important;
-    }
-  }
-`;
 
 export default function HomePage({ session }) {
   const [loggedIn, setLoggedIn] = useState(!!session);
@@ -186,9 +32,6 @@ export default function HomePage({ session }) {
 
   return (
     <div className="home">
-      {/* Estilos responsivos */}
-      <style>{responsiveStyles}</style>
-
       {/* Login */}
       {!loggedIn && <LoginModal setLoggedIn={setLoggedIn} />}
 

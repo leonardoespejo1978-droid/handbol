@@ -7,7 +7,7 @@ export default function Videos() {
 
   const botones = [
     { image: "/assets/semifinal_top6.jpg",  text: "Semifinals\nFCB-ST. ESTEVE PALAUTORDERA",  url: "https://next.nubeespesan.duckdns.org/s/cDj2Ni6N9E3EBEY" },
-    { image: "/assets/final_top6.jpg",  text: "Semifinals\nFCB-ST. ESTEVE PALAUTORDERA",  url: "https://next.nubeespesan.duckdns.org/s/cDj2Ni6N9E3EBEY" },
+    { image: "/assets/final_top6.jpg",  text: "Semifinals\nBM GRANOLLERS-FCB",  url: "https://next.nubeespesan.duckdns.org/s/BFK665rrpCLxbMG" },
   ];
 
   return (

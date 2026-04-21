@@ -1,0 +1,155 @@
+/* ===== SUBMENU DE VÍDEOS FLOTANTE EN PARALELO ===== */
+
+.videos-menu-wrapper {
+  position: relative;
+}
+
+.videos-btn-active {
+  background: linear-gradient(135deg, #c4005a 0%, #900038 100%) !important;
+  box-shadow:
+    0 8px 30px rgba(165, 0, 68, 0.7),
+    0 2px 8px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+}
+
+.videos-btn-active::before {
+  width: 6px !important;
+}
+
+.videos-btn-active::after {
+  background-position: 200% center !important;
+}
+
+.videos-btn-active .btn-arrow {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
+  animation: iconBounce 0.6s ease infinite !important;
+}
+
+.videos-btn-active .btn-icon {
+  transform: scale(1.2) rotate(-5deg) !important;
+}
+
+/* Submenu flotante */
+.submenu-videos-floating {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: transparent;
+  z-index: 200;
+  animation: slideInSubmenu 0.3s ease forwards;
+}
+
+@keyframes slideInSubmenu {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.submenu-video-item {
+  position: relative;
+  width: 200px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px 0 14px;
+  gap: 10px;
+
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ffffff;
+
+  background: linear-gradient(135deg, #A50044 0%, #6B002C 100%);
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 15px rgba(0,0,0,0.5),
+    0 1px 3px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease,
+              background 0.3s ease;
+}
+
+/* Borde izquierdo decorativo */
+.submenu-video-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: #FFED00;
+  border-radius: 6px 0 0 6px;
+  transition: width 0.3s ease;
+}
+
+/* Efecto shimmer */
+.submenu-video-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 237, 0, 0.15) 50%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  background-position: -200% center;
+  transition: background-position 0.5s ease;
+  border-radius: 6px;
+}
+
+.submenu-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+/* HOVER */
+.submenu-video-item:hover {
+  transform: translateX(8px) scale(1.02);
+  background: linear-gradient(135deg, #c4005a 0%, #900038 100%);
+  box-shadow:
+    0 8px 30px rgba(165, 0, 68, 0.7),
+    0 2px 8px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.submenu-video-item:hover::before {
+  width: 6px;
+}
+
+.submenu-video-item:hover::after {
+  background-position: 200% center;
+}
+
+.submenu-video-item:hover .submenu-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+/* ACTIVE */
+.submenu-video-item:active {
+  transform: translateX(4px) scale(0.98);
+  box-shadow:
+    0 3px 12px rgba(165, 0, 68, 0.5),
+    inset 0 2px 4px rgba(0,0,0,0.3);
+}
