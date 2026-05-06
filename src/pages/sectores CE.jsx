@@ -6,7 +6,9 @@ export default function Videos() {
   const navigate = useNavigate();
 
   const botones = [
-    { image: "/assets/vuit.jpg",  text: "VUIT",  url: "" },
+    { image: "/assets/vuit.jpg",  text: "Jornada_1\nFCB-BM VILLAFRANCA",  url: "" },
+    { image: "/assets/vuit.jpg",  text: "Jornada_2\nFCB-SAN F. DE ASIS MIJAS",  url: "" },
+    { image: "/assets/vuit.jpg",  text: "Jornada_3\nBM ALCOBENDAS-FCB",  url: "" },
   ];
 
   return (
@@ -14,7 +16,7 @@ export default function Videos() {
       <div className="stripe-overlay" aria-hidden="true" />
 
       <div className="page-header">
-        <h1>Vídeos</h1>
+        <h1>Sectors Campionats d'Espanya</h1>
         <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
       </div>
 

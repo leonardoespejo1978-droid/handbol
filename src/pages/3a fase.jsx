@@ -15,13 +15,10 @@ export default function Videos() {
     { image: "/assets/Jornada_7.jpg",  text: "Jornada 7\nFCB-SARRIA",         url: "https://next.nubeespesan.duckdns.org/s/dNQNN3WAorcQXNg" },
     { image: "/assets/Jornada_8.jpg",  text: "Jornada 8\nPALAUTORDERA-FCB",  url: "https://next.nubeespesan.duckdns.org/s/gPtSsxmDCMe59gR" },
     { image: "/assets/Jornada_9.jpg",  text: "Jornada 9\nFCB-ST. CUGAT",     url: "https://next.nubeespesan.duckdns.org/s/XDHDxadFT2WEmKM" },
-    { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH. ST. QUIRZE-FCB", url: "https://next.nubeespesan.duckdns.org/s/cwd2gMcBnFNZFRg" },
-    { image: "/assets/amistos1.jpg", text: "Amistós\nFCB-DOMINICOS CAD", url: "https://next.nubeespesan.duckdns.org/s/igHmtxTJCz8R68o" },
-    { image: "/assets/amistos2.jpg", text: "Amistós\nDOMINICOS-FCB", url: "https://next.nubeespesan.duckdns.org/s/dAFfY2rPNjqyzkN" },
-    { image: "/assets/Jornada_11.jpg", text: "Jornada 11\nFCB-VIROLAI VORAMAR", url: "https://next.nubeespesan.duckdns.org/s/KeajsHmekstnd9r" },
-    { image: "/assets/Jornada_12.jpg", text: "Jornada 12\nCREU ALTA-FCB", url: "https://next.nubeespesan.duckdns.org/s/N2KBENPym66qoJo" },
-    { image: "/assets/Jornada_13.jpg", text: "Jornada 13\nFCB-CH ESPLUGUES", url: "https://next.nubeespesan.duckdns.org/s/PGpS3Dg8bgbiGQC" },
-    { image: "/assets/amistos3.jpg", text: "Amistós Costa Daurada\nFCB-DOMINICOS", url: "https://next.nubeespesan.duckdns.org/s/TrGcKark6xMQGcJ" },
+    { image: "/assets/Jornada_10.jpg", text: "Jornada 10\nH. ST. QUIRZE-FCB", url: "https://next.nubeespesan.duckdns.org/s/kMkccg8CNmStNPW" },
+    { image: "/assets/Jornada_11.jpg", text: "Jornada 11\nFCB-VIROLAI VORAMAR", url: "https://next.nubeespesan.duckdns.org/s/HQC3wqEiEWDyD7L" },
+    { image: "/assets/Jornada_12.jpg", text: "Jornada 12\nCREU ALTA-FCB", url: "https://next.nubeespesan.duckdns.org/s/xdWsKNgFBaqzPiZ" },
+    { image: "/assets/Jornada_13.jpg", text: "Jornada 13\nFCB-CH ESPLUGUES", url: "https://next.nubeespesan.duckdns.org/s/T66m7z4xFk7WbBT" },
     { image: "/assets/Jornada_14.jpg", text: "Jornada_14\nUES SARRIA-FCB", url: "https://next.nubeespesan.duckdns.org/s/5nxPf5zL6Wjtgns" },
   ];
 
@@ -30,7 +27,7 @@ export default function Videos() {
       <div className="stripe-overlay" aria-hidden="true" />
 
       <div className="page-header">
-        <h1>Vídeos</h1>
+        <h1>3a Fase</h1>
         <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
       </div>
 

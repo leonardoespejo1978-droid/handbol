@@ -13,6 +13,8 @@ import FaseFinalCE from "./pages/fase final CE";
 import Estadistica from "./pages/Estadistica";
 import EstadisticaSelector from "./pages/EstadisticaSelector";
 import EstadisticaDrets from "./pages/EstadisticaDrets";
+import EstadisticaSectorsCE from "./pages/EstadisticaSectorsCE";
+import EstadisticaFaseFinalCE from "./pages/EstadisticaFaseFinalCE";
 import AdminPanel from "./pages/AdminPanel";
 import './styleApp.css';
 
@@ -49,6 +51,8 @@ function App() {
         <Route path="/EstadisticaSelector" element={<EstadisticaSelector />} />
         <Route path="/Estadistica" element={<Estadistica />} />
         <Route path="/EstadisticaDrets" element={<EstadisticaDrets />} />
+        <Route path="/EstadisticaSectorsCE" element={<EstadisticaSectorsCE />} />
+        <Route path="/EstadisticaFaseFinalCE" element={<EstadisticaFaseFinalCE />} />
         <Route path="/admin" element={<AdminPanel session={session} />} />
       </Routes>
     </Router>

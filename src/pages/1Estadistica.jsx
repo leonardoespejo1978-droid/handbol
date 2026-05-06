@@ -573,9 +573,9 @@ export default function Estadistica({
             <BarChart
               width={Math.max(
                 graficaIndividual.length * (isMobile ? 48 : 72) + (isMobile ? 28 : 40),
-                windowWidth - (isMobile ? 32 : 120)
+                windowWidth - (isMobile ? 48 : 120)  // 120px = padding page + card
               )}
-              height={isMobile ? 220 : chartH}
+              height={chartH}
               data={graficaIndividual}
               margin={{ top: 16, right: 8, bottom: chartMarginBottom, left: isMobile ? -10 : 0 }}
             >

@@ -4,6 +4,7 @@ const C = {
   bg: "#0f1117", card: "#1a1d27", border: "#2a2d3a",
   accent: "#e63946", accent2: "#457b9d", accent3: "#2a9d8f",
   text: "#e8eaf0", muted: "#8b8fa8",
+  warning: "#e9c46a",
 };
 
 export default function EstadisticaSelector() {
@@ -25,6 +26,22 @@ export default function EstadisticaSelector() {
       subtitol: "Infantil Masculí · Temporada 25/26",
       color: C.accent2,
       ruta: "/EstadisticaDrets",
+    },
+    {
+      id: "sectorsCE",
+      emoji: "🏅",
+      titol: "Sectors Campionats d'Espanya",
+      subtitol: "Infantil Masculí · Temporada 25/26",
+      color: C.accent3,
+      ruta: "/EstadisticaSectorsCE",
+    },
+    {
+      id: "faseFinalCE",
+      emoji: "🥇",
+      titol: "Fase Final Campionats d'Espanya",
+      subtitol: "Infantil Masculí · Temporada 25/26",
+      color: C.warning,
+      ruta: "/EstadisticaFaseFinalCE",
     },
   ];
 
@@ -72,23 +89,21 @@ export default function EstadisticaSelector() {
 
       {/* Cards de selecció */}
       <div style={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
         gap: "16px",
-        flexWrap: "wrap",
-        justifyContent: "center",
         width: "100%",
-        maxWidth: "600px",
+        maxWidth: "780px",
       }}>
         {opcions.map((o) => (
           <button
             key={o.id}
             onClick={() => navigate(o.ruta)}
             style={{
-              flex: "1 1 240px",
               background: C.card,
               border: `2px solid ${C.border}`,
               borderRadius: "16px",
-              padding: "32px 24px",
+              padding: "18px 16px",
               cursor: "pointer",
               textAlign: "center",
               color: C.text,

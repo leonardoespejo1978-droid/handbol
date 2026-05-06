@@ -4,7 +4,7 @@ import LoginModal from "../components/LoginModal";
 import "./style_1.css";
 import "./submenu-videos.css";
 
-const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com", "aleix79@fcb.es"];
+const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com"];
 
 const VIDEOS_CATEGORIES = [
   { id: "pretemporada", label: "Pretemporada" },

@@ -17,7 +17,7 @@ export default function Videos() {
       <div className="stripe-overlay" aria-hidden="true" />
 
       <div className="page-header">
-        <h1>Vídeos</h1>
+        <h1>Amistosos</h1>
         <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
       </div>
 
