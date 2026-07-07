@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import Carousel3D from "../components/Carousel3D";
-import "./style.css";
+import Carousel3D from "../../components/Carousel3D";
+import "../style.css";
 
 export default function Videos() {
   const navigate = useNavigate();

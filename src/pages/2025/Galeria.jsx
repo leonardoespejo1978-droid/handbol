@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import Carousel3D from "../components/Carousel3D";
-import "./style.css";
+import Carousel3D from "../../components/Carousel3D";
+import "../style.css";
 
 export default function Galeria() {
   const navigate = useNavigate();
@@ -25,6 +25,10 @@ export default function Galeria() {
     { image: "/assets/Jornada_14.jpg",    text: "Jornada 14\nUES SARRIA-FCB",     url: "https://next.nubeespesan.duckdns.org/s/D3YinmLm9nT3XSH" },
     { image: "/assets/semifinal_top6.jpg",    text: "TOP 6 SEMIFINAL\nFCB-ST. ESTEVE PALAUTORDERA",     url: "https://next.nubeespesan.duckdns.org/s/gX73KrCKPdo94qF" },  
     { image: "/assets/final_top6.jpg",    text: "TOP6 FINAL\nFCB-BM GRANOLLERS",     url: "https://next.nubeespesan.duckdns.org/s/epzS7Zi53arM6Zw" },
+    { image: "/assets/J1SECTORCE.jpg",    text: "Sector_CE\nFCB-BM CBM VILLAFRANCA",     url: "https://next.nubeespesan.duckdns.org/s/zAirHdiM8wcqHxx" },
+    { image: "/assets/J2SECTORCE.jpg",    text: "Sector_CE\nFCB-BM CB MIJAS",     url: "https://next.nubeespesan.duckdns.org/s/Ym96Npa4pgcyFm7" },
+    { image: "/assets/top8cefinal.jpg",    text: "Fase Final CE",     url: "https://next.nubeespesan.duckdns.org/s/r8GWG2Ttp2saLkW" },
+    
   ];
   return (
     <div className="pro-background">

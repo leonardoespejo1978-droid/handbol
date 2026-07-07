@@ -26,7 +26,7 @@ export default function LoginModal({ setLoggedIn }) {
         <div className="login-logo">
           <span className="login-logo-icon">🤾</span>
         </div>
-        <h2 className="login-title">Infantil A · FCB Handbol</h2>
+        <h2 className="login-title">Cadet B · FCB Handbol</h2>
         <p className="login-subtitle">Accés exclusiu per a l'equip</p>
 
         <input

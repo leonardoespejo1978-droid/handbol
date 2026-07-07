@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import Carousel3D from "../components/Carousel3D";
-import "./style.css";
+import Carousel3D from "../../components/Carousel3D";
+import "../style.css";
 
 export default function Videos() {
   const navigate = useNavigate();
 
   const botones = [
-    { image: "/assets/vuit.jpg",  text: "Jornada_1\nFCB-BM VILLAFRANCA",  url: "" },
-    { image: "/assets/vuit.jpg",  text: "Jornada_2\nFCB-SAN F. DE ASIS MIJAS",  url: "" },
-    { image: "/assets/vuit.jpg",  text: "Jornada_3\nBM ALCOBENDAS-FCB",  url: "" },
+    { image: "/assets/J1SECTORCE.jpg",  text: "Jornada_1\nFCB-BM VILLAFRANCA",  url: "https://next.nubeespesan.duckdns.org/s/cjNCy3eJYW2G3NS" },
+    { image: "/assets/J2SECTORCE.jpg",  text: "Jornada_2\nFCB-SAN F. DE ASIS MIJAS",  url: "https://next.nubeespesan.duckdns.org/s/9rzpZnPyjwoBTgs" },
+    { image: "/assets/J3SECTORCE.jpg",  text: "Jornada_3\nBM ALCOBENDAS-FCB",  url: "https://next.nubeespesan.duckdns.org/s/HDEJfbiZE3NEAHn" },
   ];
 
   return (

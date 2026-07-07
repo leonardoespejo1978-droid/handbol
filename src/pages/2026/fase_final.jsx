@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import Carousel3D from "../components/Carousel3D";
-import "./style.css";
+import Carousel3D from "../../components/Carousel3D";
+import "../style.css";
 
 export default function Videos() {
   const navigate = useNavigate();
 
   const botones = [
-    { image: "/assets/vuit.jpg",  text: "Vuit",  url: "" },
-
+    //{ image: "/assets/semifinal_top6.jpg",  text: "Semifinals\nFCB-ST. ESTEVE PALAUTORDERA",  url: "https://next.nubeespesan.duckdns.org/s/cDj2Ni6N9E3EBEY" },
+    //{ image: "/assets/final_top6.jpg",  text: "Finals\nBM GRANOLLERS-FCB",  url: "https://next.nubeespesan.duckdns.org/s/BFK665rrpCLxbMG" },
   ];
 
   return (
@@ -15,7 +15,7 @@ export default function Videos() {
       <div className="stripe-overlay" aria-hidden="true" />
 
       <div className="page-header">
-        <h1>Pretemporada</h1>
+        <h1>Fase Final</h1>
         <p className="page-subtitle">Infantil A · FC Barcelona Handbol</p>
       </div>
 

@@ -8,6 +8,8 @@ export default function Carousel3D({ items }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [jumpValue, setJumpValue] = useState("");
   const [jumpError, setJumpError] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResultIndex, setSearchResultIndex] = useState(0);
   const containerRef = useRef(null);
   const inputId = useId();
   const count = items.length;
@@ -90,6 +92,13 @@ export default function Carousel3D({ items }) {
   };
 
   const activeItem = items[activeIndex];
+
+  const filteredIndices = items
+    .map((item, i) => ({ item, i }))
+    .filter(({ item }) =>
+      item.text.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .map(({ i }) => i);
 
   const handleCardClick = (index) => {
     let diff = index - activeIndex;
@@ -197,27 +206,128 @@ export default function Carousel3D({ items }) {
         <span className="counter-total">{String(count).padStart(2, "0")}</span>
       </div>
 
-      {/* Jump to */}
-      <form className="carousel-jump" onSubmit={handleJump}>
-        <label className="jump-label" htmlFor={inputId}>Anar a la jornada</label>
-        <div className="jump-row">
-          <input
-            id={inputId}
-            className={`jump-input${jumpError ? " jump-error" : ""}`}
-            type="number"
-            min="1"
-            max={count}
-            value={jumpValue}
-            onChange={(e) => setJumpValue(e.target.value)}
-            placeholder="Nº"
-          />
-          <button className="jump-btn" type="submit">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
+      {/* Controls row: Jump + Search alineats */}
+      <div className="carousel-controls-row">
+
+        {/* Jump to jornada */}
+        <form className="carousel-jump" onSubmit={handleJump}>
+          <label className="jump-label" htmlFor={inputId}>Anar a la jornada</label>
+          <div className="jump-row">
+            <input
+              id={inputId}
+              className={`jump-input${jumpError ? " jump-error" : ""}`}
+              type="number"
+              min="1"
+              max={count}
+              value={jumpValue}
+              onChange={(e) => setJumpValue(e.target.value)}
+              placeholder="Nº"
+            />
+            <button className="jump-btn" type="submit">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        {/* Separador vertical */}
+        <div className="controls-divider" aria-hidden="true" />
+
+        {/* Search */}
+        <div className="carousel-jump">
+          <label className="jump-label">Cercar partit</label>
+          <div className="jump-row">
+            <input
+              className="jump-input jump-search"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                setSearchResultIndex(0);
+                if (val !== "") {
+                  const newFiltered = items
+                    .map((item, i) => ({ item, i }))
+                    .filter(({ item }) => item.text.toLowerCase().includes(val.toLowerCase()))
+                    .map(({ i }) => i);
+                  if (newFiltered.length > 0) goTo(newFiltered[0]);
+                }
+              }}
+              placeholder="palau, torrelavega..."
+            />
+            {searchQuery ? (
+              <button
+                className="jump-btn"
+                type="button"
+                onClick={() => { setSearchQuery(""); setSearchResultIndex(0); }}
+                aria-label="Esborrar cerca"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            ) : (
+              <span className="jump-btn jump-btn-icon" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+            )}
+          </div>
+
+          {/* Navegació entre resultats */}
+          {searchQuery && filteredIndices.length > 0 && (
+            <div className="search-nav">
+              {filteredIndices.length > 1 && (
+                <button
+                  className="search-nav-btn"
+                  type="button"
+                  onClick={() => {
+                    const prev = (searchResultIndex - 1 + filteredIndices.length) % filteredIndices.length;
+                    setSearchResultIndex(prev);
+                    goTo(filteredIndices[prev]);
+                  }}
+                  aria-label="Resultat anterior"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+              )}
+              <span className="search-nav-count">
+                <span className="search-nav-current">{searchResultIndex + 1}</span>
+                <span className="search-nav-sep">/</span>
+                <span>{filteredIndices.length}</span>
+              </span>
+              {filteredIndices.length > 1 && (
+                <button
+                  className="search-nav-btn"
+                  type="button"
+                  onClick={() => {
+                    const next = (searchResultIndex + 1) % filteredIndices.length;
+                    setSearchResultIndex(next);
+                    goTo(filteredIndices[next]);
+                  }}
+                  aria-label="Resultat següent"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          {searchQuery && filteredIndices.length === 0 && (
+            <div className="jump-label" style={{ color: "rgba(255,100,100,0.7)", marginTop: "4px" }}>
+              Sense resultats
+            </div>
+          )}
         </div>
-      </form>
+
+      </div>
     </div>
   );
 }
