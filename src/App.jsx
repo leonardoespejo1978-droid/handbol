@@ -84,7 +84,7 @@ function App() {
         <Route path="/historico" element={<Historico />} />
 
         {/* ── Temporada 2025/2026 ───────────────────────────────────────── */}
-        <Route path="/historico/2025" element={<HomePage2025 />} />
+        <Route path="/historico/2025" element={<HomePage2025 session={session} />} />
         <Route path="/2025/galeria" element={<Galeria2025 />} />
         <Route path="/2025/videos/pretemporada" element={<Pretemporada2025 />} />
         <Route path="/2025/videos/amistosos" element={<Amistosos2025 />} />

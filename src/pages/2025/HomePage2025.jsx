@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./style_1.css";
 import "./submenu-videos.css";
 
+const STATS_ALLOWED = ["nilsubi@fcb.es", "leonardoespejo1978@gmail.com"];
+
 // HomePage de la temporada 2025/2026 — NOMÉS LECTURA (sense login)
 // Accessible des de /historico/2025
 
@@ -16,9 +18,11 @@ const VIDEOS_CATEGORIES_2025 = [
   { id: "fase-final-ce", label: "Fase Final CE" },
 ];
 
-export default function HomePage2025() {
+export default function HomePage2025({ session }) {
   const navigate = useNavigate();
   const [showVideosMenu, setShowVideosMenu] = useState(false);
+  const email = session?.user?.email || "";
+  const canSeeStats = STATS_ALLOWED.includes(email);
 
   return (
     <div className="home">
@@ -211,11 +215,13 @@ export default function HomePage2025() {
           <span className="btn-arrow">›</span>
         </button>
 
-        <button onClick={() => navigate("/2025/EstadisticaSelector")}>
-          <span className="btn-icon">📊</span>
-          Estadística
-          <span className="btn-arrow">›</span>
-        </button>
+        {canSeeStats && (
+          <button onClick={() => navigate("/2025/EstadisticaSelector")}>
+            <span className="btn-icon">📊</span>
+            Estadística
+            <span className="btn-arrow">›</span>
+          </button>
+        )}
 
       </div>
     </div>
