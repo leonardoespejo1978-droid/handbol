@@ -1,0 +1,12 @@
+git add .
+git commit -m "texto"
+
+
+git push origin main
+
+y si no funciona este otro...
+
+git push origin main --force
+
+
+para consola npm run dev

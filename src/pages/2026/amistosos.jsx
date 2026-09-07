@@ -7,9 +7,10 @@ export default function Videos() {
 
   const botones = [
 
-    //{ image: "/assets/a1.jpg", text: "Amistós\nFCB-DOMINICOS CAD", url: "https://next.nubeespesan.duckdns.org/s/igHmtxTJCz8R68o" },
-    //{ image: "/assets/a2.jpg", text: "Amistós\nDOMINICOS-FCB", url: "https://next.nubeespesan.duckdns.org/s/TrGcKark6xMQGcJ" },
-    //{ image: "/assets/a3.jpg", text: "Amistós Costa Daurada\nFCB-DOMINICOS", url: "https://next.nubeespesan.duckdns.org/s/RZMAD5JxNs93fcm" },
+    { image: "/assets/a1.jpg", text: "ST.BOI CUP\nBMG_B-FCB", url: "https://next.nubeespesan.duckdns.org/s/K22Qweyz9oxDGxd" },
+    { image: "/assets/a2.jpg", text: "ST.BOI CUP\nFCB-DOMINICOS_B", url: "https://next.nubeespesan.duckdns.org/s/RBoEyotMZnJF2Ad" },
+    { image: "/assets/a3.jpg", text: "ST.BOI CUP\nFCB-MOLINS", url: "https://next.nubeespesan.duckdns.org/s/ki3osD5PoWs6cKj" },
+    { image: "/assets/a3.jpg", text: "ST.BOI CUP\nCOPE-FCB", url: "https://next.nubeespesan.duckdns.org/s/fQo7pk7x3kPrNam" },
    ];
 
   return (
