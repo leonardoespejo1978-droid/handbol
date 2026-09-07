@@ -242,7 +242,7 @@ export default function HomePage({ session }) {
           <button
             onClick={() =>
               window.open(
-                "https://resultadosbalonmano.isquad.es/competicion.php?id_superficie=1&seleccion=0&id_categoria=2549&id_competicion=209376&id_temp=2526&id_ambito=0&id_territorial=17",
+                "https://resultadosbalonmano.isquad.es/competicion.php?id_superficie=1&seleccion=0&id_categoria=3081&id_temp=2627&id_ambito=0&id_territorial=17",
                 "_blank"
               )
             }
