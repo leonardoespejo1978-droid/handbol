@@ -6,6 +6,7 @@ export default function EstadisticaSectorsCE() {
       arxiu="sectores_CE"
       titol="Estadístiques — Sectors Campionats d'Espanya"
       subtitol="Infantil Masculí · Temporada 25/26"
+      temporada="2026"
     />
   );
 }

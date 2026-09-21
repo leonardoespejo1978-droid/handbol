@@ -22,6 +22,7 @@ import EstadisticaSelector from "./pages/2026/EstadisticaSelector";
 import EstadisticaDrets from "./pages/2026/EstadisticaDrets";
 import EstadisticaSectorsCE from "./pages/2026/EstadisticaSectorsCE";
 import EstadisticaFaseFinalCE from "./pages/2026/EstadisticaFaseFinalCE";
+import PartitLive from "./pages/2026/PartitLive";
 
 
 // ── Temporada 2025/2026 ───────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ import EstadisticaSelector2025 from "./pages/2025/EstadisticaSelector";
 import EstadisticaDrets2025 from "./pages/2025/EstadisticaDrets";
 import EstadisticaSectorsCE2025 from "./pages/2025/EstadisticaSectorsCE";
 import EstadisticaFaseFinalCE2025 from "./pages/2025/EstadisticaFaseFinalCE";
+import PartitLive2025 from "./pages/2025/PartitLive";
 
 
 
@@ -78,13 +80,14 @@ function App() {
         <Route path="/EstadisticaDrets" element={<EstadisticaDrets />} />
         <Route path="/EstadisticaSectorsCE" element={<EstadisticaSectorsCE />} />
         <Route path="/EstadisticaFaseFinalCE" element={<EstadisticaFaseFinalCE />} />
+        <Route path="/PartitLive" element={<PartitLive />} />
         <Route path="/admin" element={<AdminPanel session={session} />} />
 
         {/* ── Pàgina d'històric ─────────────────────────────────────────── */}
         <Route path="/historico" element={<Historico />} />
 
         {/* ── Temporada 2025/2026 ───────────────────────────────────────── */}
-        <Route path="/historico/2025" element={<HomePage2025 />} />
+        <Route path="/historico/2025" element={<HomePage2025 session={session} />} />
         <Route path="/2025/galeria" element={<Galeria2025 />} />
         <Route path="/2025/videos/pretemporada" element={<Pretemporada2025 />} />
         <Route path="/2025/videos/amistosos" element={<Amistosos2025 />} />
@@ -98,6 +101,7 @@ function App() {
         <Route path="/2025/EstadisticaDrets" element={<EstadisticaDrets2025 />} />
         <Route path="/2025/EstadisticaSectorsCE" element={<EstadisticaSectorsCE2025 />} />
         <Route path="/2025/EstadisticaFaseFinalCE" element={<EstadisticaFaseFinalCE2025 />} />
+        <Route path="/2025/PartitLive" element={<PartitLive2025 />} />
 
 
       </Routes>

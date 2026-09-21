@@ -1,0 +1,6 @@
+cambiar fondo estadística en directo
+no aparece el botón de estadsitica en directo en la temporada 26/27
+tengo que diferencias entre todos los documentos de estadística por temporada. ahora solo tengo uno.
+cambiar la posición del botón de orientación abajo a la derecha
+poder editar  los jugadores ya incluidos en el equipo por ejemplo para actualizar foto.
+poder decir que jugadores del listado estan dentro de la convocatoria en un partido nuevo, es decir de la lista de 20 seleccionar a los 16 convocados

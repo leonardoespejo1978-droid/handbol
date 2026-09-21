@@ -43,6 +43,14 @@ export default function EstadisticaSelector() {
       color: C.warning,
       ruta: "/EstadisticaFaseFinalCE",
     },
+    {
+      id: "partitLive",
+      emoji: "🤾",
+      titol: "Estadística en Directe",
+      subtitol: "Introdueix dades durant el partit",
+      color: "#e07a5f",
+      ruta: "/2025/PartitLive",
+    },
   ];
 
   return (

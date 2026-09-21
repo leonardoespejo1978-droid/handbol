@@ -618,7 +618,6 @@ export default function Estadistica({
             [kpis.totalLanz7m, "Lanç. reb. 7m",    null],
             [`${kpis.eficJoc}%`, "Efic. Joc",     kpis.eficJoc>=60?C.positive:kpis.eficJoc>=45?C.warning:C.negative],
             [`${kpis.efic7m}%`,  "Efic. 7m",      kpis.efic7m>=60?C.positive:kpis.efic7m>=45?C.warning:C.negative],
-            [`${kpis.efic}%`,    "Efic. Total",   kpis.efic>=60?C.positive:kpis.efic>=45?C.warning:C.negative],
             [kpis.totalAss,    "Assistències",    C.accent3],
             [kpis.totalRec,    "Gols encaixats",  C.negative],
             [kpis.partitsUnics,"Jornades jug.",   C.warning],
@@ -629,7 +628,6 @@ export default function Estadistica({
             [kpis.totalLanz7m, "Llanç. 7m",     null],
             [`${kpis.eficJoc}%`, "Efic. Joc",   null],
             [`${kpis.efic7m}%`,  "Efic. 7m",    null],
-            [`${kpis.efic}%`,    "Efic. Total", null],
             [kpis.totalAss,    "Assistències",  C.accent2],
             [kpis.totalRec,    "Recuperacions", C.accent3],
             [kpis.partitsUnics,"Jornades",      C.warning],
@@ -818,15 +816,15 @@ export default function Estadistica({
             </div>
             {/* Tabla con scroll horizontal */}
             <div style={S.tableWrap}>
-              <table style={{ ...S.table, minWidth: isMobile ? "930px" : "auto" }}>
+              <table style={{ ...S.table, minWidth: isMobile ? "860px" : "auto" }}>
                 <thead>
                   <tr>
                     <th style={S.th}>#</th>
                     <th style={S.th}>Jugador</th>
                     <th style={S.thc}>PJ</th>
                     {(vistaMedia
-                      ? [["avgGoles","G.Joc"],["avgLanzam","L.Joc"],["eficienciaJoc","EJoc%"],["avgGoles7m","G.7m"],["avgLanzam7m","L.7m"],["eficiencia7m","E7m%"],["avgGolesTot","G.Tot"],["avgLanzamTot","L.Tot"],["eficiencia","ETot%"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
-                      : [["Goles","G.Joc"],["Lanzam.","L.Joc"],["eficienciaJoc","EJoc%"],["Goles7m","G.7m"],["Lanzam7m","L.7m"],["eficiencia7m","E7m%"],["GolesTot","G.Tot"],["LanzamTot","L.Tot"],["eficiencia","ETot%"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
+                      ? [["avgGoles","G.Joc"],["avgLanzam","L.Joc"],["eficienciaJoc","EJoc%"],["avgGoles7m","G.7m"],["avgLanzam7m","L.7m"],["eficiencia7m","E7m%"],["avgGolesTot","G.Tot"],["avgLanzamTot","L.Tot"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
+                      : [["Goles","G.Joc"],["Lanzam.","L.Joc"],["eficienciaJoc","EJoc%"],["Goles7m","G.7m"],["Lanzam7m","L.7m"],["eficiencia7m","E7m%"],["GolesTot","G.Tot"],["LanzamTot","L.Tot"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
                     ).map(([col,lbl]) => (
                       <th key={col} style={S.thc} onClick={() => toggleOrder(col)}>{lbl}{arr(col)}</th>
                     ))}
@@ -849,7 +847,6 @@ export default function Estadistica({
                         <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=70?C.positive:row.eficiencia7m>=50?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
                         <td style={{ ...S.tdc, fontWeight:600 }}>{row.avgGolesTot}</td>
                         <td style={{ ...S.tdc, fontWeight:600 }}>{row.avgLanzamTot}</td>
-                        <td style={S.tdc}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
                         <td style={S.tdc}>{row.avgAsistencia}</td>
                         <td style={S.tdc}>{row.avgRecup}</td>
                         <td style={S.tdc}>{row.avgExclusion}</td>
@@ -863,7 +860,6 @@ export default function Estadistica({
                         <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=70?C.positive:row.eficiencia7m>=50?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
                         <td style={{ ...S.tdc, fontWeight:600 }}>{row.GolesTot}</td>
                         <td style={{ ...S.tdc, fontWeight:600 }}>{row.LanzamTot}</td>
-                        <td style={S.tdc}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
                         <td style={S.tdc}>{row.Asistencia}</td>
                         <td style={S.tdc}>{row["Recup."]}</td>
                         <td style={S.tdc}>{row.Exclusión}</td>
@@ -933,7 +929,7 @@ export default function Estadistica({
               <div style={S.card}>
                 <div style={S.cardT}>🧤 Porters — Rànquing</div>
                 <div style={S.tableWrap}>
-                  <table style={{ ...S.table, minWidth: isMobile ? "560px" : "auto" }}>
+                  <table style={{ ...S.table, minWidth: isMobile ? "500px" : "auto" }}>
                     <thead>
                       <tr>
                         <th style={S.th}>Porter</th>
@@ -945,7 +941,6 @@ export default function Estadistica({
                           <th style={S.thc}>GC/P</th>
                           <th style={S.thc}>EJoc%</th>
                           <th style={S.thc}>E7m%</th>
-                          <th style={S.thc}>ETot%</th>
                           <th style={S.thc}>Ass/P</th>
                           <th style={S.thc}>Pas/P</th>
                         </>) : (<>
@@ -955,7 +950,6 @@ export default function Estadistica({
                           <th style={S.thc}>GC</th>
                           <th style={S.thc}>EJoc%</th>
                           <th style={S.thc}>E7m%</th>
-                          <th style={S.thc}>ETot%</th>
                           <th style={S.thc}>Ass.</th>
                           <th style={S.thc}>Pèrd. Passe</th>
                         </>)}
@@ -973,7 +967,6 @@ export default function Estadistica({
                             <td style={S.tdc}><strong style={{ color:C.negative }}>{row.avgGC}</strong></td>
                             <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=60?C.positive:row.eficienciaJoc>=45?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
                             <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=60?C.positive:row.eficiencia7m>=45?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
-                            <td style={S.tdc}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
                             <td style={S.tdc}>{row.avgAss}</td>
                             <td style={S.tdc}>{row.avgPase}</td>
                           </>) : (<>
@@ -983,7 +976,6 @@ export default function Estadistica({
                             <td style={S.tdc}><strong style={{ color:C.negative }}>{row.GC}</strong></td>
                             <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=60?C.positive:row.eficienciaJoc>=45?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
                             <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=60?C.positive:row.eficiencia7m>=45?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
-                            <td style={S.tdc}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
                             <td style={S.tdc}>{row.Asistencia}</td>
                             <td style={S.tdc}>{row.Pase}</td>
                           </>)}
@@ -1356,8 +1348,8 @@ export default function Estadistica({
         <div style={S.card}>
           <div style={S.cardT}>Registres detallats ({filtered.length} files)</div>
           <div style={S.tableWrap}>
-            <table style={{ ...S.table, minWidth: isMobile ? "880px" : "auto" }}>
-              <thead><tr>{["Jugador","Jornada","Rival","Gols Joc","Llanç. Joc","Efic Joc%","Gols 7m","Llanç. 7m","Efic 7m%","Gols Tot","Llanç. Tot","Efic Tot%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
+            <table style={{ ...S.table, minWidth: isMobile ? "820px" : "auto" }}>
+              <thead><tr>{["Jugador","Jornada","Rival","Gols Joc","Gols 7m","Gols Tot","Lanz. Joc","Lanz. 7m","Lanz. Tot","Efic Joc%","Efic 7m%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
               <tbody>
                 {filtered.map((row,i) => (
                   <tr key={i} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
@@ -1365,14 +1357,13 @@ export default function Estadistica({
                     <td style={S.tdr}>J{row.JORNADA}</td>
                     <td style={{ ...S.td, fontSize:"11px", color:C.muted, whiteSpace:"nowrap" }}>{(row.rival||"").replace(/\(.\)$/,"").trim()}</td>
                     <td style={S.tdr}>{row.GolesJoc ?? "—"}</td>
-                    <td style={S.tdr}>{row.LanzamJoc ?? "—"}</td>
-                    <td style={S.tdr}>{row["% lanzJoc"]!=null?`${row["% lanzJoc"]}%`:"—"}</td>
                     <td style={S.tdr}>{row.Goles7m ?? "—"}</td>
-                    <td style={S.tdr}>{row.Lanzam7m ?? "—"}</td>
-                    <td style={S.tdr}>{row["% lanz7m"]!=null?`${row["% lanz7m"]}%`:"—"}</td>
                     <td style={S.tdr}><strong>{row.GolesTot ?? "—"}</strong></td>
+                    <td style={S.tdr}>{row.LanzamJoc ?? "—"}</td>
+                    <td style={S.tdr}>{row.Lanzam7m ?? "—"}</td>
                     <td style={S.tdr}><strong>{row.LanzamTot ?? "—"}</strong></td>
-                    <td style={S.tdr}><strong>{row["% lanz"]!=null?`${row["% lanz"]}%`:"—"}</strong></td>
+                    <td style={S.tdr}>{row["% lanzJoc"]!=null?`${row["% lanzJoc"]}%`:"—"}</td>
+                    <td style={S.tdr}>{row["% lanz7m"]!=null?`${row["% lanz7m"]}%`:"—"}</td>
                     <td style={S.tdr}>{row.Asistencia ?? "—"}</td>
                     <td style={S.tdr}>{row["Recup."] ?? "—"}</td>
                     <td style={S.tdr}>{row["Exclusión"] ?? "—"}</td>

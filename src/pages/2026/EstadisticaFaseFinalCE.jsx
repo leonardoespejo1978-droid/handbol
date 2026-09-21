@@ -6,6 +6,7 @@ export default function EstadisticaFaseFinalCE() {
       arxiu="fase_final_CE"
       titol="Estadístiques — Fase Final Campionats d'Espanya"
       subtitol="Infantil Masculí · Temporada 25/26"
+      temporada="2026"
     />
   );
 }

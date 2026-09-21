@@ -6,16 +6,8 @@ export default function Videos() {
   const navigate = useNavigate();
 
   const botones = [
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 1\nFCB-VIROLAI VORAMAR",  url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 2\nBM LA ROCA-FCB",      url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 3\nFCB-BCN SANTS",    url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 4\nC.A. SABADELL-FCB",        url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 5\nFCB-BM GRANOLLERS",      url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 6\nVIROLAI VORAMAR-FCB",      url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 7\nFCB-LA ROCA",         url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 8\nBCN SANTS-FCB",  url: "" },
-    //{ image: "/assets/vuit.jpg",  text: "Jornada 9\nFCB-C.A. SABADELL",     url: "" },
-    //{ image: "/assets/vuit.jpg", text: "Jornada 10\nBM. GRANOLLERS-FCB", url: "" },
+    { image: "/assets/J1_DRETS_26_27.jpg",  text: "Jornada 1\nFCB-BM GRANOLLERS B",  url: "https://next.nubeespesan.duckdns.org/s/xCMJDC7jTKgwE6m" },
+
   ];
 
   return (

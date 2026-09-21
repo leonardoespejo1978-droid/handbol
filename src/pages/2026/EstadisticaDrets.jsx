@@ -6,6 +6,7 @@ export default function EstadisticaDrets() {
       arxiu="LLIGA DRETS FEDERATIUS INFANTIL MASCULI 25_26"
       titol="Estadístiques — Drets Federatius"
       subtitol="Infantil Masculí · Temporada 25/26"
+      temporada="2026"
     />
   );
 }

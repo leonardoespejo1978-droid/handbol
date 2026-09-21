@@ -49,6 +49,7 @@ export default function Estadistica({
   arxiu = "LLIGA INFANTIL MASCULI 3FASE 25_26",
   titol = "Estadístiques — Lliga Infantil Masculí",
   subtitol = "Fase 3 · Temporada 25/26",
+  temporada = "2025",
 }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -62,7 +63,7 @@ export default function Estadistica({
   const [filtreRival, setFiltreRival] = useState("Tots");
   const [filtreJugador, setFiltreJugador] = useState("Tots");
   const [filtreGrafic, setFiltreGrafic] = useState("Gols/Lançaments");
-  const [ordenarPer, setOrdenarPer] = useState("Goles");
+  const [ordenarPer, setOrdenarPer] = useState("GolesTot");
   const [ordenDesc, setOrdenDesc] = useState(true);
   const [vistaMedia, setVistaMedia] = useState(false);
   const [filtreGraficPorter, setFiltreGraficPorter] = useState("Parades/Lançaments");
@@ -74,9 +75,9 @@ export default function Estadistica({
   useEffect(() => {
     const load = async () => {
       try {
-        let response = await fetch(`/${arxiu}.xlsm`);
-        if (!response.ok) response = await fetch(`/${arxiu}.xlsx`);
-        if (!response.ok) throw new Error(`Arxiu no trobat (${response.status}). Comprova que estigui a /public`);
+        let response = await fetch(`/${temporada}/${arxiu}.xlsm`);
+        if (!response.ok) response = await fetch(`/${temporada}/${arxiu}.xlsx`);
+        if (!response.ok) throw new Error(`Arxiu no trobat (${response.status}). Comprova que estigui a /public/${temporada}`);
         const buffer = await response.arrayBuffer();
         const wb = XLSX.read(buffer, { type: "array", cellDates: true });
         const ws = wb.Sheets["Datos"];
@@ -85,14 +86,36 @@ export default function Estadistica({
         setRawData(json.map(r => {
           // Always derive POSICION from player name (Excel column may contain formulas as strings)
           const posicion = getPosicion(r.Jugador);
-          let pctLanz = null;
-          if (r["Lanzam."] != null && r["Lanzam."] > 0) {
-            if (posicion === "JUGADOR") pctLanz = Math.round(((r.Goles || 0) / r["Lanzam."]) * 100);
-            else pctLanz = Math.round(((r.Paradas || 0) / r["Lanzam."]) * 100);
+
+          // Llançaments/gols "en joc" (columnes originals) + "de 7 metres" (columnes noves)
+          const lanzJoc = r["Lanzam."]    || 0;
+          const lanz7m  = r["Lanzam. 7m"] || 0;
+          const lanzTot = lanzJoc + lanz7m;
+
+          let golJoc, gol7m;
+          if (posicion === "JUGADOR") {
+            golJoc = r.Goles || 0;
+            gol7m  = r["Goles 7m"] || 0;
+          } else {
+            // Porters: la columna "Goles"/"Paradas" = parades en joc; "Goles 7m" = parades a 7 metres
+            golJoc = r.Paradas || r.Goles || 0;
+            gol7m  = r["Goles 7m"] || 0;
           }
-          // "goles contra" column in Excel is also a formula string — compute directly
-          const gc = posicion === "PORTERO" ? ((r["Lanzam."] || 0) - (r.Paradas || 0)) : 0;
-          return { ...r, POSICION: posicion, "% lanz": pctLanz, "_gc": gc };
+          const golTot = golJoc + gol7m;
+
+          const pct = (g, l) => (l > 0 ? Math.round((g / l) * 100) : null);
+
+          // "goles contra" (per porters) — en joc / 7m / total
+          const gcJoc = posicion === "PORTERO" ? (lanzJoc - golJoc) : 0;
+          const gc7m  = posicion === "PORTERO" ? (lanz7m  - gol7m)  : 0;
+
+          return {
+            ...r, POSICION: posicion,
+            LanzamJoc: lanzJoc, Lanzam7m: lanz7m, LanzamTot: lanzTot,
+            GolesJoc: golJoc, Goles7m: gol7m, GolesTot: golTot,
+            "% lanz": pct(golTot, lanzTot), "% lanzJoc": pct(golJoc, lanzJoc), "% lanz7m": pct(gol7m, lanz7m),
+            "_gc": gcJoc + gc7m, "_gcJoc": gcJoc, "_gc7m": gc7m,
+          };
         }));
       } catch (e) {
         setError(e.message);
@@ -117,8 +140,8 @@ export default function Estadistica({
   const jugadorsFiltered = useMemo(() => filtered.filter(r => r.POSICION === "JUGADOR"), [filtered]);
   const portersFiltered  = useMemo(() => filtered.filter(r => r.POSICION === "PORTERO"),  [filtered]);
 
-  const STAT_FIELDS = ["Goles","Lanzam.","Asistencia","Recup.","Exclusión","Pase","Área","PenaltiProvocado","Exclusión +"];
-  const PORTER_FIELDS = ["Paradas","Lanzam.","Goles"];
+  const STAT_FIELDS = ["Goles","Lanzam.","Goles 7m","Lanzam. 7m","Asistencia","Recup.","Exclusión","Pase","Área","PenaltiProvocado","Exclusión +"];
+  const PORTER_FIELDS = ["Paradas","Lanzam.","Goles","Goles 7m","Lanzam. 7m"];
   const haJugat = (r) => r.POSICION === "PORTERO"
     ? PORTER_FIELDS.some(k => r[k] != null && r[k] !== 0 && r[k] !== "")
     : STAT_FIELDS.some(k => r[k] != null && r[k] !== 0);
@@ -131,16 +154,24 @@ export default function Estadistica({
     portersFiltered.forEach(r => {
       if (!map[r.Jugador]) map[r.Jugador] = {
         Jugador: r.Jugador, partits: 0, partitsJugats: 0,
-        Paradas: 0, "Lanzam.": 0, GC: 0,
+        ParadasJoc: 0, Paradas7m: 0, Paradas: 0,
+        "Lanzam.": 0, Lanzam7m: 0, LanzamTot: 0,
+        GCJoc: 0, GC7m: 0, GC: 0,
         Asistencia: 0, Pase: 0, "Exclusión +": 0,
       };
       const m = map[r.Jugador];
       m.partits++;
       if (haJugat(r)) m.partitsJugats++;
-      // "Goles" al Excel del porter = parades (mateix valor que Paradas)
-      m.Paradas       += r.Paradas || r.Goles || 0;
-      m["Lanzam."]    += r["Lanzam."] || 0;
-      m.GC            += r._gc || 0;
+      // "Goles"/"Paradas" al Excel del porter = parades en joc; "Goles 7m" = parades a 7 metres
+      m.ParadasJoc    += r.GolesJoc  || 0;
+      m.Paradas7m     += r.Goles7m   || 0;
+      m.Paradas       += r.GolesTot  || 0;
+      m["Lanzam."]    += r.LanzamJoc || 0;
+      m.Lanzam7m      += r.Lanzam7m  || 0;
+      m.LanzamTot      += r.LanzamTot || 0;
+      m.GCJoc         += r._gcJoc || 0;
+      m.GC7m          += r._gc7m  || 0;
+      m.GC            += r._gc    || 0;
       m.Asistencia    += r.Asistencia || 0;
       m.Pase          += r.Pase || 0;
       m["Exclusión +"] += r["Exclusión +"] || 0;
@@ -150,12 +181,18 @@ export default function Estadistica({
       const avg1 = (v) => +(v / pj).toFixed(1);
       return {
         ...m,
-        eficiencia:  m["Lanzam."] ? Math.round((m.Paradas / m["Lanzam."]) * 100) : 0,
-        avgParades:  avg1(m.Paradas),
-        avgGC:       avg1(m.GC),
-        avgLanzReb:  avg1(m["Lanzam."]),
-        avgAss:      avg1(m.Asistencia),
-        avgPase:     avg1(m.Pase),
+        eficiencia:    m.LanzamTot   ? Math.round((m.Paradas    / m.LanzamTot)   * 100) : 0,
+        eficienciaJoc: m["Lanzam."]  ? Math.round((m.ParadasJoc / m["Lanzam."])  * 100) : 0,
+        eficiencia7m:  m.Lanzam7m    ? Math.round((m.Paradas7m  / m.Lanzam7m)    * 100) : 0,
+        avgParades:    avg1(m.Paradas),
+        avgParadesJoc: avg1(m.ParadasJoc),
+        avgParades7m:  avg1(m.Paradas7m),
+        avgGC:         avg1(m.GC),
+        avgLanzReb:    avg1(m.LanzamTot),
+        avgLanzRebJoc: avg1(m["Lanzam."]),
+        avgLanzReb7m:  avg1(m.Lanzam7m),
+        avgAss:        avg1(m.Asistencia),
+        avgPase:       avg1(m.Pase),
       };
     });
   }, [portersFiltered]);
@@ -165,14 +202,20 @@ export default function Estadistica({
     jugadorsFiltered.forEach(r => {
       if (!map[r.Jugador]) map[r.Jugador] = {
         Jugador: r.Jugador, partits: 0, partitsJugats: 0,
-        Goles: 0, "Lanzam.": 0, Asistencia: 0, "Recup.": 0,
+        Goles: 0, Goles7m: 0, GolesTot: 0,
+        "Lanzam.": 0, Lanzam7m: 0, LanzamTot: 0,
+        Asistencia: 0, "Recup.": 0,
         Exclusión: 0, Pase: 0, Área: 0, Pasos: 0, Otro: 0, PenaltiProvocado: 0, "Exclusión +": 0,
       };
       const m = map[r.Jugador];
       m.partits++;
       if (haJugat(r)) m.partitsJugats++;
-      m.Goles            += r.Goles || 0;
-      m["Lanzam."]       += r["Lanzam."] || 0;
+      m.Goles            += r.GolesJoc  || 0;
+      m.Goles7m          += r.Goles7m   || 0;
+      m.GolesTot         += r.GolesTot  || 0;
+      m["Lanzam."]       += r.LanzamJoc || 0;
+      m.Lanzam7m         += r.Lanzam7m  || 0;
+      m.LanzamTot         += r.LanzamTot || 0;
       m.Asistencia       += r.Asistencia || 0;
       m["Recup."]        += r["Recup."] || 0;
       m.Exclusión        += r["Exclusión"] || 0;
@@ -188,9 +231,15 @@ export default function Estadistica({
       const avg1 = (v) => +(v / pj).toFixed(1);
       return {
         ...m,
-        eficiencia: m["Lanzam."] ? Math.round((m.Goles / m["Lanzam."]) * 100) : 0,
+        eficiencia:    m.LanzamTot   ? Math.round((m.GolesTot / m.LanzamTot)  * 100) : 0,
+        eficienciaJoc: m["Lanzam."]  ? Math.round((m.Goles    / m["Lanzam."]) * 100) : 0,
+        eficiencia7m:  m.Lanzam7m    ? Math.round((m.Goles7m  / m.Lanzam7m)   * 100) : 0,
         avgGoles:      avg1(m.Goles),
+        avgGoles7m:    avg1(m.Goles7m),
+        avgGolesTot:   avg1(m.GolesTot),
         avgLanzam:     avg1(m["Lanzam."]),
+        avgLanzam7m:   avg1(m.Lanzam7m),
+        avgLanzamTot:  avg1(m.LanzamTot),
         avgAsistencia: avg1(m.Asistencia),
         avgRecup:      avg1(m["Recup."]),
         avgExclusion:  avg1(m.Exclusión),
@@ -207,11 +256,13 @@ export default function Estadistica({
       (filtreRival === "Tots" || r.rival === filtreRival));
     const map = {};
     allJugs.forEach(r => {
-      if (!map[r.Jugador]) map[r.Jugador] = { Goles:0,"Lanzam.":0,Asistencia:0,"Recup.":0,PenaltiProvocado:0,"Exclusión +":0,Exclusión:0,Pase:0,Área:0,Pasos:0,Otro:0, partitsJugats:0 };
+      if (!map[r.Jugador]) map[r.Jugador] = { Goles:0,GolesTot:0,"Lanzam.":0,LanzamTot:0,Asistencia:0,"Recup.":0,PenaltiProvocado:0,"Exclusión +":0,Exclusión:0,Pase:0,Área:0,Pasos:0,Otro:0, partitsJugats:0 };
       const m = map[r.Jugador];
       if (haJugat(r)) m.partitsJugats++;
-      m.Goles            += r.Goles || 0;
-      m["Lanzam."]       += r["Lanzam."] || 0;
+      m.Goles            += r.GolesJoc  || 0;
+      m.GolesTot         += r.GolesTot  || 0;
+      m["Lanzam."]       += r.LanzamJoc || 0;
+      m.LanzamTot         += r.LanzamTot || 0;
       m.Asistencia       += r.Asistencia || 0;
       m["Recup."]        += r["Recup."] || 0;
       m.PenaltiProvocado += r.PenaltiProvocado || 0;
@@ -237,8 +288,8 @@ export default function Estadistica({
       ? statsPerJugador.filter(r => r.Jugador === filtreJugador)
       : statsSorted;
     const lbl = (total, avg) => vistaMedia ? avg : total;
-    if (filtreGrafic === "Gols/Lançaments") return data.map(d => ({ name: d.Jugador, Goles: lbl(d.Goles, d.avgGoles), "Lanzam.": lbl(d["Lanzam."], d.avgLanzam) }));
-    if (filtreGrafic === "Eficiència")       return data.map(d => ({ name: d.Jugador, "Efic. %": d.eficiencia }));
+    if (filtreGrafic === "Gols/Lançaments") return data.map(d => ({ name: d.Jugador, Goles: lbl(d.GolesTot, d.avgGolesTot), "Lanzam.": lbl(d.LanzamTot, d.avgLanzamTot) }));
+    if (filtreGrafic === "Eficiència")       return data.map(d => ({ name: d.Jugador, "Efic. Joc %": d.eficienciaJoc, "Efic. 7m %": d.eficiencia7m }));
     if (filtreGrafic === "Accions positives") return data.map(d => ({ name: d.Jugador, Assistències: lbl(d.Asistencia, d.avgAsistencia), "Recup.": lbl(d["Recup."], d.avgRecup), "Pen. Prov.": lbl(d.PenaltiProvocado, d.avgPenalti) }));
     if (filtreGrafic === "Accions negatives") return data.map(d => ({ name: d.Jugador, "Pèrd. Passe": lbl(d.Pase, d.avgPase), "Pèrd. Àrea": d.Área, Exclusions: lbl(d.Exclusión, d.avgExclusion) }));
     return data;
@@ -246,7 +297,7 @@ export default function Estadistica({
 
   const graficaBarsKeys = useMemo(() => {
     if (filtreGrafic === "Gols/Lançaments")   return ["Goles", "Lanzam."];
-    if (filtreGrafic === "Eficiència")          return ["Efic. %"];
+    if (filtreGrafic === "Eficiència")          return ["Efic. Joc %", "Efic. 7m %"];
     if (filtreGrafic === "Accions positives")   return ["Assistències", "Recup.", "Pen. Prov."];
     if (filtreGrafic === "Accions negatives")   return ["Pèrd. Passe", "Pèrd. Àrea", "Exclusions"];
     return [];
@@ -266,15 +317,15 @@ export default function Estadistica({
       allPorters.forEach(r => {
         if (!porterMap[r.Jugador]) porterMap[r.Jugador] = { Paradas:0,"Lanzam.":0,Asistencia:0 };
         const m = porterMap[r.Jugador];
-        m.Paradas    += r.Paradas || 0;
-        m["Lanzam."] += r["Lanzam."] || 0;
+        m.Paradas    += r.GolesTot  || 0;
+        m["Lanzam."] += r.LanzamTot || 0;
         m.Asistencia += r.Asistencia || 0;
       });
       const allP = Object.values(porterMap);
       const mx = k => Math.max(...allP.map(x => x[k] || 0), 1);
       return [
         { stat: "Parades",    val: Math.round((j.Paradas      / mx("Paradas"))    * 100) },
-        { stat: "Lanz. reb.", val: Math.round((j["Lanzam."]   / mx("Lanzam."))   * 100) },
+        { stat: "Lanz. reb.", val: Math.round((j.LanzamTot     / mx("Lanzam."))   * 100) },
         { stat: "Assistèn.",  val: Math.round((j.Asistencia   / mx("Asistencia")) * 100) },
       ];
     }
@@ -283,8 +334,8 @@ export default function Estadistica({
     if (!j) return [];
     const mx = k => Math.max(...statsPerJugadorTots.map(x => x[k] || 0), 1);
     return [
-      { stat: "Goles",       val: Math.round((j.Goles              / mx("Goles"))            * 100) },
-      { stat: "Lanzam.",     val: Math.round((j["Lanzam."]         / mx("Lanzam."))         * 100) },
+      { stat: "Goles",       val: Math.round((j.GolesTot           / mx("GolesTot"))         * 100) },
+      { stat: "Lanzam.",     val: Math.round((j.LanzamTot          / mx("LanzamTot"))         * 100) },
       { stat: "Assistèn.",   val: Math.round((j.Asistencia         / mx("Asistencia"))        * 100) },
       { stat: "Recup.",      val: Math.round((j["Recup."]          / mx("Recup."))           * 100) },
       { stat: "Exc. Prov.",  val: Math.round((j["Exclusión +"]     / mx("Exclusión +"))      * 100) },
@@ -306,7 +357,7 @@ export default function Estadistica({
       const porterMap = {};
       allPorters.forEach(r => {
         if (!porterMap[r.Jugador]) porterMap[r.Jugador] = { GC:0, Pase:0 };
-        porterMap[r.Jugador].GC   += Math.max(0, (r["Lanzam."]||0) - (r.Paradas||0));
+        porterMap[r.Jugador].GC   += Math.max(0, (r.LanzamTot||0) - (r.GolesTot||0));
         porterMap[r.Jugador].Pase += r.Pase || 0;
       });
       const allP = Object.values(porterMap);
@@ -340,13 +391,13 @@ export default function Estadistica({
       const rival = (rawData.find(r => r.JORNADA === j)?.rival || "").replace(/\(.\)$/,"").trim();
       const label = `J${j}`;
       if (!row) return { label, rival, jugat: false, Goles:0,"Lanzam.":0,Asistencia:0,"Recup.":0,Exclusión:0,Pase:0,Parades:0,GC:0,Efic:0,acumGoles,acumLanz,acumAss,acumRec,acumExcl,acumPas,acumPar,acumGC };
-      const goles  = row.Goles || 0;
-      const lanz   = row["Lanzam."] || 0;
+      const goles  = row.GolesTot || 0;
+      const lanz   = row.LanzamTot || 0;
       const ass    = row.Asistencia || 0;
       const rec    = row["Recup."] || 0;
       const excl   = row["Exclusión"] || 0;
       const pas    = row.Pase || 0;
-      const par    = isPorter ? (row.Paradas || row.Goles || 0) : 0;
+      const par    = isPorter ? (row.GolesTot || 0) : 0;
       const gc     = isPorter ? (lanz - par) : 0;
       const efic   = isPorter ? (lanz ? Math.round((par/lanz)*100) : 0) : (lanz ? Math.round((goles/lanz)*100) : 0);
       acumGoles += goles; acumLanz += lanz; acumAss += ass; acumRec += rec;
@@ -363,15 +414,23 @@ export default function Estadistica({
       const rows    = rawData.filter(r => r.JORNADA === j);
       const porters = rows.filter(r => r.POSICION === "PORTERO");
       const jugs    = rows.filter(r => r.POSICION === "JUGADOR");
-      const gf      = sum(jugs, "Goles");
+      const gf      = sum(jugs, "GolesTot");
+      const gfJoc   = sum(jugs, "GolesJoc");
+      const gf7m    = sum(jugs, "Goles7m");
       const gc      = porters.reduce((acc, p) => {
-        const lanzReb = p["Lanzam."] || 0;
-        const par = p.Paradas || 0;
+        const lanzReb = p.LanzamTot || 0;
+        const par = p.GolesTot || 0;
         return acc + Math.max(0, lanzReb - par);
       }, 0);
-      const lanz       = sum(jugs, "Lanzam.");
-      const parades    = sum(porters, "Paradas");
-      const lanzRebuts = porters.reduce((acc, p) => acc + (p["Lanzam."] || 0), 0);
+      const lanz       = sum(jugs, "LanzamTot");
+      const lanzJoc     = sum(jugs, "LanzamJoc");
+      const lanz7m      = sum(jugs, "Lanzam7m");
+      const parades     = sum(porters, "GolesTot");
+      const paradesJoc  = sum(porters, "GolesJoc");
+      const parades7m   = sum(porters, "Goles7m");
+      const lanzRebuts   = porters.reduce((acc, p) => acc + (p.LanzamTot || 0), 0);
+      const lanzRebutsJoc = porters.reduce((acc, p) => acc + (p.LanzamJoc || 0), 0);
+      const lanzRebuts7m  = porters.reduce((acc, p) => acc + (p.Lanzam7m  || 0), 0);
       // Accions positives equip
       const assistencies   = sum(jugs, "Asistencia");
       const recuperacions  = sum(jugs, "Recup.");
@@ -388,8 +447,13 @@ export default function Estadistica({
       const lv      = rows[0]?.["L/V"] || "";
       return {
         jornada: `J${j}`, rival: rivalNet, rivalRaw, lv, gf, gc, lanz, parades, lanzRebuts,
+        gfJoc, gf7m, lanzJoc, lanz7m, paradesJoc, parades7m, lanzRebutsJoc, lanzRebuts7m,
         efic: lanz ? Math.round((gf/lanz)*100) : 0,
+        eficJoc: lanzJoc ? Math.round((gfJoc/lanzJoc)*100) : 0,
+        efic7m:  lanz7m  ? Math.round((gf7m/lanz7m)*100)   : 0,
         eficPort: lanzRebuts ? Math.round((parades/lanzRebuts)*100) : 0,
+        eficPortJoc: lanzRebutsJoc ? Math.round((paradesJoc/lanzRebutsJoc)*100) : 0,
+        eficPort7m:  lanzRebuts7m  ? Math.round((parades7m/lanzRebuts7m)*100)   : 0,
         assistencies, recuperacions, exclusionsPos, penaltisProvocats,
         perdaPasse, passos, area, exclusions, altres,
       };
@@ -402,21 +466,31 @@ export default function Estadistica({
       const p = statsPerPorter.find(r => r.Jugador === filtreJugador);
       if (p) return {
         totalGols: p.Paradas,
-        totalLanz: p["Lanzam."],
+        totalLanz: p.LanzamTot,
+        totalGols7m: p.Paradas7m,
+        totalLanz7m: p.Lanzam7m,
         efic: p.eficiencia,
+        eficJoc: p.eficienciaJoc,
+        efic7m: p.eficiencia7m,
         totalAss: p.Asistencia,
         totalRec: p.GC,
         partitsUnics: p.partitsJugats,
         isPorter: true,
       };
     }
-    const totalGols = sum(jugadorsFiltered, "Goles");
-    const totalLanz = sum(jugadorsFiltered, "Lanzam.");
+    const totalGols = sum(jugadorsFiltered, "GolesTot");
+    const totalLanz = sum(jugadorsFiltered, "LanzamTot");
+    const totalGolsJoc = sum(jugadorsFiltered, "GolesJoc");
+    const totalLanzJoc = sum(jugadorsFiltered, "LanzamJoc");
+    const totalGols7m  = sum(jugadorsFiltered, "Goles7m");
+    const totalLanz7m  = sum(jugadorsFiltered, "Lanzam7m");
     const totalAss  = sum(jugadorsFiltered, "Asistencia");
     const totalRec  = sum(jugadorsFiltered, "Recup.");
-    const efic      = totalLanz ? Math.round((totalGols / totalLanz) * 100) : 0;
+    const efic      = totalLanz   ? Math.round((totalGols   / totalLanz)   * 100) : 0;
+    const eficJoc   = totalLanzJoc ? Math.round((totalGolsJoc / totalLanzJoc) * 100) : 0;
+    const efic7m    = totalLanz7m  ? Math.round((totalGols7m  / totalLanz7m)  * 100) : 0;
     const partitsUnics = new Set(filtered.map(r => r.JORNADA)).size;
-    return { totalGols, totalLanz, efic, totalAss, totalRec, partitsUnics, isPorter: false };
+    return { totalGols, totalLanz, totalGols7m, totalLanz7m, efic, eficJoc, efic7m, totalAss, totalRec, partitsUnics, isPorter: false };
   }, [jugadorsFiltered, filtered, filtreJugador, statsPerPorter]);
 
   // ─── Responsive Styles ────────────────────────────────────────────────────
@@ -440,10 +514,10 @@ export default function Estadistica({
     select:  { background: C.card, border: `1px solid ${C.border}`, color: C.text, padding: "8px 10px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", outline: "none", width: "100%", boxSizing: "border-box" },
 
     // KPIs — 3 columnas en móvil, auto en desktop
-    kpis:    { display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(auto-fit, minmax(120px, 1fr))", gap: isMobile ? "8px" : "10px", marginBottom: "18px" },
-    kpi:     { background: C.card, border: `1px solid ${C.border}`, borderRadius: "10px", padding: isMobile ? "12px 8px" : "16px", textAlign: "center" },
-    kpiVal:  (color) => ({ fontSize: isMobile ? "20px" : "26px", fontWeight: 700, color: color || C.accent }),
-    kpiLbl:  { fontSize: isMobile ? "10px" : "11px", color: C.muted, marginTop: "3px" },
+    kpis:    { display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(auto-fit, minmax(88px, 1fr))", gap: isMobile ? "6px" : "8px", marginBottom: "18px" },
+    kpi:     { background: C.card, border: `1px solid ${C.border}`, borderRadius: "10px", padding: isMobile ? "10px 6px" : "10px 6px", textAlign: "center" },
+    kpiVal:  (color) => ({ fontSize: isMobile ? "17px" : "20px", fontWeight: 700, color: color || C.accent }),
+    kpiLbl:  { fontSize: isMobile ? "9px" : "10px", color: C.muted, marginTop: "3px" },
 
     card:    { background: C.card, border: `1px solid ${C.border}`, borderRadius: "12px", padding: isMobile ? "14px" : "20px", marginBottom: "14px" },
     cardT:   { fontSize: "11px", fontWeight: 600, color: C.muted, marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.6px" },
@@ -452,8 +526,10 @@ export default function Estadistica({
     tableWrap: { overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "4px" },
     table:   { width: "100%", borderCollapse: "collapse", fontSize: isMobile ? "12px" : "13px", minWidth: isMobile ? "520px" : "auto" },
     th:      { padding: isMobile ? "8px 10px" : "10px 12px", textAlign: "left", color: C.muted, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" },
+    thc:     { padding: isMobile ? "8px 10px" : "10px 12px", textAlign: "center", color: C.muted, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" },
     td:      { padding: isMobile ? "8px 10px" : "9px 12px", borderBottom: `1px solid ${C.border}20` },
     tdr:     { padding: isMobile ? "8px 10px" : "9px 12px", borderBottom: `1px solid ${C.border}20`, textAlign: "right", fontVariantNumeric: "tabular-nums" },
+    tdc:     { padding: isMobile ? "8px 10px" : "9px 12px", borderBottom: `1px solid ${C.border}20`, textAlign: "center", fontVariantNumeric: "tabular-nums" },
     badge:   (color) => ({ background: `${color}22`, color, padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: 600, display: "inline-block" }),
 
     // Botones gráfica — scroll horizontal en móvil
@@ -537,15 +613,21 @@ export default function Estadistica({
         <div style={S.kpis}>
           {(kpis.isPorter ? [
             [kpis.totalGols,   "Parades totals",  C.accent2],
-            [kpis.totalLanz,   "Lançaments reb.", null],
-            [`${kpis.efic}%`,  "Eficiència",      kpis.efic>=60?C.positive:kpis.efic>=45?C.warning:C.negative],
+            [kpis.totalLanz,   "Lanç. reb.",       null],
+            [kpis.totalGols7m, "Parades 7m",       C.accent2],
+            [kpis.totalLanz7m, "Lanç. reb. 7m",    null],
+            [`${kpis.eficJoc}%`, "Efic. Joc",     kpis.eficJoc>=60?C.positive:kpis.eficJoc>=45?C.warning:C.negative],
+            [`${kpis.efic7m}%`,  "Efic. 7m",      kpis.efic7m>=60?C.positive:kpis.efic7m>=45?C.warning:C.negative],
             [kpis.totalAss,    "Assistències",    C.accent3],
             [kpis.totalRec,    "Gols encaixats",  C.negative],
             [kpis.partitsUnics,"Jornades jug.",   C.warning],
           ] : [
             [kpis.totalGols,   "Gols totals",   null],
             [kpis.totalLanz,   "Lançaments",    null],
-            [`${kpis.efic}%`,  "Eficiència",    null],
+            [kpis.totalGols7m, "Gols 7m",       null],
+            [kpis.totalLanz7m, "Llanç. 7m",     null],
+            [`${kpis.eficJoc}%`, "Efic. Joc",   null],
+            [`${kpis.efic7m}%`,  "Efic. 7m",    null],
             [kpis.totalAss,    "Assistències",  C.accent2],
             [kpis.totalRec,    "Recuperacions", C.accent3],
             [kpis.partitsUnics,"Jornades",      C.warning],
@@ -734,17 +816,17 @@ export default function Estadistica({
             </div>
             {/* Tabla con scroll horizontal */}
             <div style={S.tableWrap}>
-              <table style={S.table}>
+              <table style={{ ...S.table, minWidth: isMobile ? "860px" : "auto" }}>
                 <thead>
                   <tr>
                     <th style={S.th}>#</th>
                     <th style={S.th}>Jugador</th>
-                    <th style={S.th}>PJ</th>
+                    <th style={S.thc}>PJ</th>
                     {(vistaMedia
-                      ? [["avgGoles","Gols/P"],["avgLanzam","Lanz/P"],["eficiencia","Efic%"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
-                      : [["Goles","Gols"],["Lanzam.","Lanz."],["eficiencia","Efic%"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
+                      ? [["avgGoles","G.Joc"],["avgLanzam","L.Joc"],["eficienciaJoc","EJoc%"],["avgGoles7m","G.7m"],["avgLanzam7m","L.7m"],["eficiencia7m","E7m%"],["avgGolesTot","G.Tot"],["avgLanzamTot","L.Tot"],["avgAsistencia","Ass/P"],["avgRecup","Rec/P"],["avgExclusion","Exc/P"],["avgPenalti","Pen/P"]]
+                      : [["Goles","G.Joc"],["Lanzam.","L.Joc"],["eficienciaJoc","EJoc%"],["Goles7m","G.7m"],["Lanzam7m","L.7m"],["eficiencia7m","E7m%"],["GolesTot","G.Tot"],["LanzamTot","L.Tot"],["Asistencia","Ass."],["Recup.","Rec."],["Exclusión","Exc."],["PenaltiProvocado","Pen."]]
                     ).map(([col,lbl]) => (
-                      <th key={col} style={S.th} onClick={() => toggleOrder(col)}>{lbl}{arr(col)}</th>
+                      <th key={col} style={S.thc} onClick={() => toggleOrder(col)}>{lbl}{arr(col)}</th>
                     ))}
                   </tr>
                 </thead>
@@ -755,23 +837,33 @@ export default function Estadistica({
                       onClick={() => setFiltreJugador(row.Jugador === filtreJugador ? "Tots" : row.Jugador)}>
                       <td style={S.td}><span style={S.badge(i<3?C.warning:C.muted)}>{i+1}</span></td>
                       <td style={{ ...S.td, fontWeight:600, color: row.Jugador===filtreJugador?C.accent:C.text, whiteSpace: "nowrap" }}>{row.Jugador}</td>
-                      <td style={{ ...S.tdr, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
+                      <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
                       {vistaMedia ? (<>
-                        <td style={S.tdr}>{row.avgGoles}</td>
-                        <td style={S.tdr}>{row.avgLanzam}</td>
-                        <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                        <td style={S.tdr}>{row.avgAsistencia}</td>
-                        <td style={S.tdr}>{row.avgRecup}</td>
-                        <td style={S.tdr}>{row.avgExclusion}</td>
-                        <td style={S.tdr}>{row.avgPenalti}</td>
+                        <td style={S.tdc}>{row.avgGoles}</td>
+                        <td style={S.tdc}>{row.avgLanzam}</td>
+                        <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=70?C.positive:row.eficienciaJoc>=50?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
+                        <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.avgGoles7m}</td>
+                        <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.avgLanzam7m}</td>
+                        <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=70?C.positive:row.eficiencia7m>=50?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
+                        <td style={{ ...S.tdc, fontWeight:600 }}>{row.avgGolesTot}</td>
+                        <td style={{ ...S.tdc, fontWeight:600 }}>{row.avgLanzamTot}</td>
+                        <td style={S.tdc}>{row.avgAsistencia}</td>
+                        <td style={S.tdc}>{row.avgRecup}</td>
+                        <td style={S.tdc}>{row.avgExclusion}</td>
+                        <td style={S.tdc}>{row.avgPenalti}</td>
                       </>) : (<>
-                        <td style={S.tdr}>{row.Goles}</td>
-                        <td style={S.tdr}>{row["Lanzam."]}</td>
-                        <td style={S.tdr}><span style={S.badge(row.eficiencia>=70?C.positive:row.eficiencia>=50?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                        <td style={S.tdr}>{row.Asistencia}</td>
-                        <td style={S.tdr}>{row["Recup."]}</td>
-                        <td style={S.tdr}>{row.Exclusión}</td>
-                        <td style={S.tdr}>{row.PenaltiProvocado}</td>
+                        <td style={S.tdc}>{row.Goles}</td>
+                        <td style={S.tdc}>{row["Lanzam."]}</td>
+                        <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=70?C.positive:row.eficienciaJoc>=50?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
+                        <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.Goles7m}</td>
+                        <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.Lanzam7m}</td>
+                        <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=70?C.positive:row.eficiencia7m>=50?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
+                        <td style={{ ...S.tdc, fontWeight:600 }}>{row.GolesTot}</td>
+                        <td style={{ ...S.tdc, fontWeight:600 }}>{row.LanzamTot}</td>
+                        <td style={S.tdc}>{row.Asistencia}</td>
+                        <td style={S.tdc}>{row["Recup."]}</td>
+                        <td style={S.tdc}>{row.Exclusión}</td>
+                        <td style={S.tdc}>{row.PenaltiProvocado}</td>
                       </>)}
                     </tr>
                   ))}
@@ -788,9 +880,9 @@ export default function Estadistica({
           const grafPorter = statsPerPorter.map(p => ({
             name: p.Jugador,
             Parades:   vistaMedia ? p.avgParades  : p.Paradas,
-            "Lanz. reb.": vistaMedia ? p.avgLanzReb : p["Lanzam."],
+            "Lanz. reb.": vistaMedia ? p.avgLanzReb : p.LanzamTot,
           }));
-          const grafEfic = statsPerPorter.map(p => ({ name: p.Jugador, "Efic. %": p.eficiencia }));
+          const grafEfic = statsPerPorter.map(p => ({ name: p.Jugador, "Efic. Joc %": p.eficienciaJoc, "Efic. 7m %": p.eficiencia7m }));
           const grafAccions = statsPerPorter.map(p => ({
             name: p.Jugador,
             Assistències: vistaMedia ? p.avgAss  : p.Asistencia,
@@ -801,7 +893,7 @@ export default function Estadistica({
                           : grafPorterActiu === "Eficiència"          ? grafEfic
                           : grafAccions;
           const grafKeys  = grafPorterActiu === "Parades/Lançaments" ? ["Parades","Lanz. reb."]
-                          : grafPorterActiu === "Eficiència"          ? ["Efic. %"]
+                          : grafPorterActiu === "Eficiència"          ? ["Efic. Joc %","Efic. 7m %"]
                           : ["Assistències","Pèrd. Passe"];
           return (
             <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
@@ -841,21 +933,25 @@ export default function Estadistica({
                     <thead>
                       <tr>
                         <th style={S.th}>Porter</th>
-                        <th style={S.th}>PJ</th>
+                        <th style={S.thc}>PJ</th>
                         {vistaMedia ? (<>
-                          <th style={S.th}>Par/P</th>
-                          <th style={S.th}>LR/P</th>
-                          <th style={S.th}>GC/P</th>
-                          <th style={S.th}>Efic.%</th>
-                          <th style={S.th}>Ass/P</th>
-                          <th style={S.th}>Pas/P</th>
+                          <th style={S.thc}>Par/P</th>
+                          <th style={S.thc}>Par7m/P</th>
+                          <th style={S.thc}>LR/P</th>
+                          <th style={S.thc}>GC/P</th>
+                          <th style={S.thc}>EJoc%</th>
+                          <th style={S.thc}>E7m%</th>
+                          <th style={S.thc}>Ass/P</th>
+                          <th style={S.thc}>Pas/P</th>
                         </>) : (<>
-                          <th style={S.th}>Parades</th>
-                          <th style={S.th}>Lanz. reb.</th>
-                          <th style={S.th}>GC</th>
-                          <th style={S.th}>Efic.%</th>
-                          <th style={S.th}>Ass.</th>
-                          <th style={S.th}>Pèrd. Passe</th>
+                          <th style={S.thc}>Parades</th>
+                          <th style={S.thc}>Par. 7m</th>
+                          <th style={S.thc}>Lanz. reb.</th>
+                          <th style={S.thc}>GC</th>
+                          <th style={S.thc}>EJoc%</th>
+                          <th style={S.thc}>E7m%</th>
+                          <th style={S.thc}>Ass.</th>
+                          <th style={S.thc}>Pèrd. Passe</th>
                         </>)}
                       </tr>
                     </thead>
@@ -863,21 +959,25 @@ export default function Estadistica({
                       {[...statsPerPorter].sort((a,b) => b.eficiencia - a.eficiencia).map((row, i) => (
                         <tr key={row.Jugador} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
                           <td style={{ ...S.td, fontWeight:600 }}>{row.Jugador}</td>
-                          <td style={{ ...S.tdr, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
+                          <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.partitsJugats}<span style={{ color:C.border, fontSize:"10px" }}>/{row.partits}</span></td>
                           {vistaMedia ? (<>
-                            <td style={S.tdr}>{row.avgParades}</td>
-                            <td style={S.tdr}>{row.avgLanzReb}</td>
-                            <td style={S.tdr}><strong style={{ color:C.negative }}>{row.avgGC}</strong></td>
-                            <td style={S.tdr}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                            <td style={S.tdr}>{row.avgAss}</td>
-                            <td style={S.tdr}>{row.avgPase}</td>
+                            <td style={S.tdc}>{row.avgParades}</td>
+                            <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.avgParades7m}</td>
+                            <td style={S.tdc}>{row.avgLanzReb}</td>
+                            <td style={S.tdc}><strong style={{ color:C.negative }}>{row.avgGC}</strong></td>
+                            <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=60?C.positive:row.eficienciaJoc>=45?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
+                            <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=60?C.positive:row.eficiencia7m>=45?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
+                            <td style={S.tdc}>{row.avgAss}</td>
+                            <td style={S.tdc}>{row.avgPase}</td>
                           </>) : (<>
-                            <td style={S.tdr}>{row.Paradas}</td>
-                            <td style={S.tdr}>{row["Lanzam."]}</td>
-                            <td style={S.tdr}><strong style={{ color:C.negative }}>{row.GC}</strong></td>
-                            <td style={S.tdr}><span style={S.badge(row.eficiencia>=60?C.positive:row.eficiencia>=45?C.warning:C.negative)}>{row.eficiencia}%</span></td>
-                            <td style={S.tdr}>{row.Asistencia}</td>
-                            <td style={S.tdr}>{row.Pase}</td>
+                            <td style={S.tdc}>{row.Paradas}</td>
+                            <td style={{ ...S.tdc, color:C.muted, fontSize:"11px" }}>{row.Paradas7m}</td>
+                            <td style={S.tdc}>{row.LanzamTot}</td>
+                            <td style={S.tdc}><strong style={{ color:C.negative }}>{row.GC}</strong></td>
+                            <td style={S.tdc}><span style={S.badge(row.eficienciaJoc>=60?C.positive:row.eficienciaJoc>=45?C.warning:C.negative)}>{row.eficienciaJoc}%</span></td>
+                            <td style={S.tdc}><span style={S.badge(row.eficiencia7m>=60?C.positive:row.eficiencia7m>=45?C.warning:C.negative)}>{row.eficiencia7m}%</span></td>
+                            <td style={S.tdc}>{row.Asistencia}</td>
+                            <td style={S.tdc}>{row.Pase}</td>
                           </>)}
                         </tr>
                       ))}
@@ -909,12 +1009,24 @@ export default function Estadistica({
 
           // Totals del filtre actual
           const totalGF   = sum(data,"gf");
+          const totalGFJoc = sum(data,"gfJoc");
+          const totalGF7m  = sum(data,"gf7m");
           const totalGC   = sum(data,"gc");
           const totalLanz = sum(data,"lanz");
+          const totalLanzJoc = sum(data,"lanzJoc");
+          const totalLanz7m  = sum(data,"lanz7m");
           const totalPar  = sum(data,"parades");
+          const totalParJoc = sum(data,"paradesJoc");
+          const totalPar7m  = sum(data,"parades7m");
           const totalLanzR= sum(data,"lanzRebuts");
+          const totalLanzRJoc = sum(data,"lanzRebutsJoc");
+          const totalLanzR7m  = sum(data,"lanzRebuts7m");
           const eficAtac  = totalLanz ? Math.round((totalGF/totalLanz)*100) : 0;
+          const eficAtacJoc = totalLanzJoc ? Math.round((totalGFJoc/totalLanzJoc)*100) : 0;
+          const eficAtac7m  = totalLanz7m  ? Math.round((totalGF7m/totalLanz7m)*100)   : 0;
           const eficPort  = totalLanzR ? Math.round((totalPar/totalLanzR)*100) : 0;
+          const eficPortJoc = totalLanzRJoc ? Math.round((totalParJoc/totalLanzRJoc)*100) : 0;
+          const eficPort7m  = totalLanzR7m  ? Math.round((totalPar7m/totalLanzR7m)*100)   : 0;
           // Accions positives totals
           const totalAss  = sum(data,"assistencies");
           const totalRec  = sum(data,"recuperacions");
@@ -935,12 +1047,22 @@ export default function Estadistica({
 
           // Mitges temporada completa
           const avgGF    = avg("gf");
+          const avgGFJoc = avg("gfJoc");
+          const avgGF7m  = avg("gf7m");
           const avgGC    = avg("gc");
           const avgLanz  = avg("lanz");
+          const avgLanzJoc = avg("lanzJoc");
+          const avgLanz7m  = avg("lanz7m");
           const avgLanzR = avg("lanzRebuts");
           const avgPar   = avg("parades");
+          const avgParJoc = avg("paradesJoc");
+          const avgPar7m  = avg("parades7m");
           const avgEficAtac = allData.length ? Math.round(sum(allData,"gf")/sum(allData,"lanz")*100||0) : 0;
+          const avgEficAtacJoc = sum(allData,"lanzJoc") ? Math.round(sum(allData,"gfJoc")/sum(allData,"lanzJoc")*100) : 0;
+          const avgEficAtac7m  = sum(allData,"lanz7m")  ? Math.round(sum(allData,"gf7m")/sum(allData,"lanz7m")*100)   : 0;
           const avgEficPort = sum(allData,"lanzRebuts") ? Math.round(sum(allData,"parades")/sum(allData,"lanzRebuts")*100) : 0;
+          const avgEficPortJoc = sum(allData,"lanzRebutsJoc") ? Math.round(sum(allData,"paradesJoc")/sum(allData,"lanzRebutsJoc")*100) : 0;
+          const avgEficPort7m  = sum(allData,"lanzRebuts7m")  ? Math.round(sum(allData,"parades7m")/sum(allData,"lanzRebuts7m")*100)   : 0;
           const avgAss   = avg("assistencies");
           const avgRec   = avg("recuperacions");
           const avgExcP  = avg("exclusionsPos");
@@ -1009,10 +1131,12 @@ export default function Estadistica({
               </div>
 
               {/* Eficiències */}
-              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(2,1fr)", gap:"10px", marginBottom:"14px" }}>
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:"10px", marginBottom:"14px" }}>
                 {[
-                  [`${eficAtac}%`, "Efic. atac (% lanzaments → gol)", null],
-                  [`${eficPort}%`, "Efic. porteria (% lanzaments aturat)", C.accent2],
+                  [`${eficAtacJoc}%`, "Efic. atac Joc", null],
+                  [`${eficAtac7m}%`, "Efic. atac 7m", null],
+                  [`${eficPortJoc}%`, "Efic. porteria Joc", C.accent2],
+                  [`${eficPort7m}%`, "Efic. porteria 7m", C.accent2],
                 ].map(([v,l,color]) => (
                   <div key={l} style={{ background: C.card, border:`1px solid ${C.border}`, borderRadius:"10px", padding:"12px", textAlign:"center" }}>
                     <div style={{ fontSize: isMobile?"20px":"24px", fontWeight:700, color: color || C.accent }}>{v}</div>
@@ -1091,15 +1215,23 @@ export default function Estadistica({
                     <tbody>
                       {/* Atac */}
                       <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("⚔️ Atac")}</td></tr>
-                      {summaryRow("Gols a favor", totalGF, avgGF, true)}
-                      {summaryRow("Lanzaments", totalLanz, avgLanz, true)}
-                      {summaryRow("% Efic. atac", eficAtac, avgEficAtac, true)}
+                      {summaryRow("Gols a favor (total)", totalGF, avgGF, true)}
+                      {summaryRow("　· Gols en joc", totalGFJoc, avgGFJoc, true)}
+                      {summaryRow("　· Gols de 7m", totalGF7m, avgGF7m, true)}
+                      {summaryRow("Lanzaments (total)", totalLanz, avgLanz, true)}
+                      {summaryRow("　· Lanz. en joc", totalLanzJoc, avgLanzJoc, true)}
+                      {summaryRow("　· Lanz. de 7m", totalLanz7m, avgLanz7m, true)}
+                      {summaryRow("% Efic. atac Joc", eficAtacJoc, avgEficAtacJoc, true)}
+                      {summaryRow("% Efic. atac 7m", eficAtac7m, avgEficAtac7m, true)}
                       {/* Porteria */}
                       <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("🧤 Porteria")}</td></tr>
                       {summaryRow("Gols en contra", totalGC, avgGC, false)}
-                      {summaryRow("Lanz. rebuts", totalLanzR, avgLanzR, false)}
-                      {summaryRow("Parades", totalPar, avgPar, true)}
-                      {summaryRow("% Efic. porteria", eficPort, avgEficPort, true)}
+                      {summaryRow("Lanz. rebuts (total)", totalLanzR, avgLanzR, false)}
+                      {summaryRow("Parades (total)", totalPar, avgPar, true)}
+                      {summaryRow("　· Parades en joc", totalParJoc, avgParJoc, true)}
+                      {summaryRow("　· Parades 7m", totalPar7m, avgPar7m, true)}
+                      {summaryRow("% Efic. porteria Joc", eficPortJoc, avgEficPortJoc, true)}
+                      {summaryRow("% Efic. porteria 7m", eficPort7m, avgEficPort7m, true)}
                       {/* Accions positives */}
                       <tr><td colSpan={3} style={{ padding:0 }}>{sectionTitle("✅ Accions positives")}</td></tr>
                       {summaryRow("Total accions positives", totalPos, avgPos, true)}
@@ -1193,8 +1325,8 @@ export default function Estadistica({
                 const label = `${rivalNet}${lv ? ` (${lv})` : ""}`;
                 const k = `${r.JORNADA}_${rivalRaw}`;
                 if (!map[k]) map[k] = { rival: label, gf:0, gc:0, _order: r.JORNADA };
-                if (r.POSICION === "JUGADOR") map[k].gf += r.Goles || 0;
-                if (r.POSICION === "PORTERO") map[k].gc += Math.max(0, (r["Lanzam."]||0) - (r.Paradas||0));
+                if (r.POSICION === "JUGADOR") map[k].gf += r.GolesTot || 0;
+                if (r.POSICION === "PORTERO") map[k].gc += Math.max(0, (r.LanzamTot||0) - (r.GolesTot||0));
               });
               return Object.values(map).sort((a,b) => a._order - b._order);
             })()} margin={{ top:16, right:8, bottom:chartMarginBottom, left: isMobile ? -10 : 0 }}>
@@ -1216,17 +1348,22 @@ export default function Estadistica({
         <div style={S.card}>
           <div style={S.cardT}>Registres detallats ({filtered.length} files)</div>
           <div style={S.tableWrap}>
-            <table style={{ ...S.table, minWidth: isMobile ? "580px" : "auto" }}>
-              <thead><tr>{["Jugador","Jornada","Rival","Gols","Lanz.","Efic%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
+            <table style={{ ...S.table, minWidth: isMobile ? "820px" : "auto" }}>
+              <thead><tr>{["Jugador","Jornada","Rival","Gols Joc","Gols 7m","Gols Tot","Lanz. Joc","Lanz. 7m","Lanz. Tot","Efic Joc%","Efic 7m%","Ass.","Rec.","Excl.","Passe","Àrea"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
               <tbody>
                 {filtered.map((row,i) => (
                   <tr key={i} style={{ background: i%2===0?"transparent":`${C.border}18` }}>
                     <td style={{ ...S.td, fontWeight:600, whiteSpace:"nowrap" }}>{row.Jugador}</td>
                     <td style={S.tdr}>J{row.JORNADA}</td>
                     <td style={{ ...S.td, fontSize:"11px", color:C.muted, whiteSpace:"nowrap" }}>{(row.rival||"").replace(/\(.\)$/,"").trim()}</td>
-                    <td style={S.tdr}>{row.Goles ?? "—"}</td>
-                    <td style={S.tdr}>{row["Lanzam."] ?? "—"}</td>
-                    <td style={S.tdr}>{row["% lanz"]!=null?`${row["% lanz"]}%`:"—"}</td>
+                    <td style={S.tdr}>{row.GolesJoc ?? "—"}</td>
+                    <td style={S.tdr}>{row.Goles7m ?? "—"}</td>
+                    <td style={S.tdr}><strong>{row.GolesTot ?? "—"}</strong></td>
+                    <td style={S.tdr}>{row.LanzamJoc ?? "—"}</td>
+                    <td style={S.tdr}>{row.Lanzam7m ?? "—"}</td>
+                    <td style={S.tdr}><strong>{row.LanzamTot ?? "—"}</strong></td>
+                    <td style={S.tdr}>{row["% lanzJoc"]!=null?`${row["% lanzJoc"]}%`:"—"}</td>
+                    <td style={S.tdr}>{row["% lanz7m"]!=null?`${row["% lanz7m"]}%`:"—"}</td>
                     <td style={S.tdr}>{row.Asistencia ?? "—"}</td>
                     <td style={S.tdr}>{row["Recup."] ?? "—"}</td>
                     <td style={S.tdr}>{row["Exclusión"] ?? "—"}</td>
