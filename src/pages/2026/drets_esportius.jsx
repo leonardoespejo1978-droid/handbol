@@ -7,6 +7,7 @@ export default function Videos() {
 
   const botones = [
     { image: "/assets/J1_DRETS_26_27.jpg",  text: "Jornada 1\nFCB-BM GRANOLLERS B",  url: "https://next.nubeespesan.duckdns.org/s/xCMJDC7jTKgwE6m" },
+        { image: "/assets/J2_DRETS_26_27.jpg",  text: "Jornada 2\nH. SANT CUGAT_A-FCB",  url: "https://next.nubeespesan.duckdns.org/s/ABiKWJNjZqkKegT" },
 
   ];
 
