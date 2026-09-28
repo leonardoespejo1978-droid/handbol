@@ -785,7 +785,7 @@ export default function Estadistica({
                             <XAxis dataKey="name" tick={{ fill:C.muted, fontSize:10 }} interval={0} />
                             <YAxis tick={{ fill:C.muted, fontSize:10 }} domain={ch.pct ? [0,100] : [0,"auto"]} unit={ch.pct ? "%" : ""} allowDecimals={false} />
                             <Tooltip {...tip} formatter={(v) => [ch.pct ? `${v ?? "—"}%` : v, "Mitjana"]} />
-                            <Bar dataKey="val" radius={[4,4,0,0]} isAnimationActive={false}>
+                            <Bar dataKey="val" radius={[4,4,0,0]}>
                               {avgData.map((d,i) => <Cell key={i} fill={d.color} />)}
                               <LabelList dataKey="val" position="top" fill={C.text} fontSize={10} formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
                             </Bar>
@@ -799,7 +799,7 @@ export default function Estadistica({
                               formatter={(v, name) => [ch.pct ? `${v ?? "—"}%` : v, name]} />
                             <Legend wrapperStyle={{ fontSize:"11px", color:C.muted }} />
                             {ch.series.map(s => (
-                              <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]} isAnimationActive={false}>
+                              <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]}>
                                 <LabelList dataKey={s.key} position="top" fill={C.text} fontSize={ch.series.length > 3 ? 8 : 10}
                                   formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
                               </Bar>
