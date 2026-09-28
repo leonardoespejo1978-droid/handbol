@@ -798,12 +798,7 @@ export default function Estadistica({
                             <Tooltip {...tip} labelFormatter={(l) => { const d = rows.find(r => r.label === l); return d?.rival ? `${l} — ${d.rival}` : l; }}
                               formatter={(v, name) => [ch.pct ? `${v ?? "—"}%` : v, name]} />
                             <Legend wrapperStyle={{ fontSize:"11px", color:C.muted }} />
-                            {ch.series.map(s => (
-                              <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]}>
-                                <LabelList dataKey={s.key} position="top" fill={C.text} fontSize={ch.series.length > 3 ? 8 : 10}
-                                  formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
-                              </Bar>
-                            ))}
+                            {ch.series.map(s => <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]} />)}
                           </BarChart>
                         )}
                       </ResponsiveContainer>
