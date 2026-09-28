@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  ResponsiveContainer, LineChart, Line, Cell
+  ResponsiveContainer, LineChart, Line
 } from "recharts";
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
@@ -66,7 +66,6 @@ export default function Estadistica({
   const [ordenarPer, setOrdenarPer] = useState("GolesTot");
   const [ordenDesc, setOrdenDesc] = useState(true);
   const [vistaMedia, setVistaMedia] = useState(false);
-  const [resumMode, setResumMode] = useState("totals"); // "totals" | "mitjanes"
   const [filtreGraficPorter, setFiltreGraficPorter] = useState("Parades/Lançaments");
   const [grafEvoCamp, setGrafEvoCamp] = useState("Gols/Lançaments");
   const [grafEvoMode, setGrafEvoMode] = useState("partit"); // "partit" | "acumulat"
@@ -98,13 +97,9 @@ export default function Estadistica({
             golJoc = r.Goles || 0;
             gol7m  = r["Goles 7m"] || 0;
           } else {
-            // Porters: la columna "Goles"/"Paradas" = parades en joc (valor directe a l'Excel).
+            // Porters: la columna "Goles"/"Paradas" = parades en joc; "Goles 7m" = parades a 7 metres
             golJoc = r.Paradas || r.Goles || 0;
-            // "Goles 7m" a l'Excel es registra igual que pels jugadors: gols marcats des de 7m.
-            // Per al porter, aquest gol és en contra seu, així que les parades a 7m s'obtenen
-            // restant els gols encaixats als llançaments rebuts des de 7m.
-            const golsEncaixats7m = r["Goles 7m"] || 0;
-            gol7m = lanz7m - golsEncaixats7m;
+            gol7m  = r["Goles 7m"] || 0;
           }
           const golTot = golJoc + gol7m;
 
@@ -413,43 +408,6 @@ export default function Estadistica({
     });
   }, [filtreJugador, rawData]);
 
-  // Resum per jornada del jugador/porter seleccionat (totes les jornades jugades, sense filtres)
-  const resumJugador = useMemo(() => {
-    if (filtreJugador === "Tots") return null;
-    const isPorter = getPosicion(filtreJugador) === "PORTERO";
-    const pct = (g, l) => (l > 0 ? Math.round((g / l) * 100) : null);
-    const rows = rawData
-      .filter(r => r.Jugador === filtreJugador && haJugat(r))
-      .sort((a, b) => a.JORNADA - b.JORNADA)
-      .map(r => {
-        const base = {
-          label: `J${r.JORNADA}`,
-          rival: (r.rival || "").replace(/\(.\)$/, "").trim(),
-          eficJoc: pct(r.GolesJoc, r.LanzamJoc),
-          efic7m:  pct(r.Goles7m,  r.Lanzam7m),
-          eficTot: pct(r.GolesTot, r.LanzamTot),
-          gJoc: r.GolesJoc || 0, lJoc: r.LanzamJoc || 0,
-          g7m: r.Goles7m || 0,   l7m: r.Lanzam7m || 0,
-          gTot: r.GolesTot || 0, lTot: r.LanzamTot || 0,
-          ass: r.Asistencia || 0, exclPos: r["Exclusión +"] || 0,
-          rec: r["Recup."] || 0, pen: r.PenaltiProvocado || 0,
-          excl: r["Exclusión"] || 0, pase: r.Pase || 0, area: r.Área || 0,
-          pasos: r.Pasos || 0, altres: r.Otro || 0,
-          gc: r._gc || 0,
-        };
-        return base;
-      });
-    const n = rows.length;
-    const tot = k => rows.reduce((a, r) => a + (r[k] || 0), 0);
-    const avg = k => (n ? +(tot(k) / n).toFixed(1) : 0);
-    const mitjanes = {
-      eficJoc: pct(tot("gJoc"), tot("lJoc")),
-      efic7m:  pct(tot("g7m"),  tot("l7m")),
-      eficTot: pct(tot("gTot"), tot("lTot")),
-    };
-    return { isPorter, rows, n, avg, mitjanes };
-  }, [filtreJugador, rawData]);
-
   const statsEquipPerJornada = useMemo(() => {
     const jornadesList = Array.from(new Set(rawData.map(r => r.JORNADA))).filter(Boolean).sort((a,b)=>a-b);
     return jornadesList.map(j => {
@@ -720,95 +678,6 @@ export default function Estadistica({
             </BarChart>
           </div>
         </div>
-
-        {/* ── RESUM ESTADÍSTIC: 4 gràfiques (només quan hi ha jugador seleccionat) ── */}
-        {filtreJugador !== "Tots" && resumJugador && resumJugador.n > 0 && (() => {
-          const { isPorter, rows, n, avg, mitjanes } = resumJugador;
-          const isAvg = resumMode === "mitjanes";
-          const P = isPorter;
-
-          // Definició de les 4 gràfiques: cada sèrie = { name, key (per jornada), color, pct?, avgKey|avgPct }
-          const charts = [
-            { title: P ? "🥅 Llançaments / Gols rebuts" : "🎯 Gols / Llançaments",
-              series: P
-                ? [{ name:"Llanç. rebuts", key:"lTot", color:C.accent2 }, { name:"Gols encaixats", key:"gc", color:C.negative }]
-                : [{ name:"Gols", key:"gTot", color:C.accent3 }, { name:"Llançaments", key:"lTot", color:C.accent2 }] },
-            { title: P ? "📊 % Parades" : "📊 Percentatges",
-              pct: true,
-              series: [{ name:"Joc", key:"eficJoc", color:C.accent2, avgPct:mitjanes.eficJoc },
-                       { name:"7m",  key:"efic7m",  color:C.warning, avgPct:mitjanes.efic7m },
-                       { name:"Total", key:"eficTot", color:C.accent3, avgPct:mitjanes.eficTot }] },
-            { title: "⬆ Accions positives",
-              series: P
-                ? [{ name:"Assistències", key:"ass", color:C.accent3 }, { name:"Exclusions +", key:"exclPos", color:C.warning }]
-                : [{ name:"Assistències", key:"ass", color:C.accent3 }, { name:"Recuperacions", key:"rec", color:C.accent2 },
-                   { name:"Exclusions +", key:"exclPos", color:C.warning }, { name:"Penal. provocat", key:"pen", color:"#f4a261" }] },
-            { title: "⬇ Accions negatives",
-              series: P
-                ? [{ name:"Pèrd. Passe", key:"pase", color:C.negative }, { name:"Exclusions", key:"excl", color:C.warning }]
-                : [{ name:"Pèrd. Passe", key:"pase", color:C.negative }, { name:"Pèrd. Àrea", key:"area", color:C.warning },
-                   { name:"Exclusions", key:"excl", color:"#f4a261" }, { name:"Passos", key:"pasos", color:C.accent2 },
-                   { name:"Altres", key:"altres", color:C.muted }] },
-          ];
-
-          const tip = { contentStyle:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, fontSize:"12px" } };
-          const h = isMobile ? 240 : 290;
-
-          return (
-            <div style={S.card}>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", justifyContent:"space-between", alignItems:"center", marginBottom:"14px" }}>
-                <div style={{ ...S.cardT, marginBottom:0 }}>📋 Resum estadístic — {filtreJugador}
-                  <span style={{ textTransform:"none", letterSpacing:0, fontWeight:400, marginLeft:"8px" }}>
-                    {isAvg ? `(mitjana per partit · ${n} partits jugats)` : "(per jornada)"}
-                  </span>
-                </div>
-                <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
-                  {[["totals","Totals"],["mitjanes","Mitjanes"]].map(([val,lbl]) => (
-                    <button key={val} onClick={() => setResumMode(val)} style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"11px", fontWeight:600, background: resumMode===val ? C.accent : "transparent", color: resumMode===val ? "#fff" : C.muted, transition:"all .2s" }}>{lbl}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:"14px" }}>
-                {charts.map(ch => {
-                  const avgData = ch.series.map(s => ({
-                    name: s.name, color: s.color,
-                    val: ch.pct ? s.avgPct : avg(s.key),
-                  }));
-                  return (
-                    <div key={ch.title} style={{ background:`${C.border}22`, border:`1px solid ${C.border}`, borderRadius:"10px", padding:"12px" }}>
-                      <div style={{ ...S.cardT, marginBottom:"8px" }}>{ch.title}</div>
-                      <ResponsiveContainer width="100%" height={h}>
-                        {isAvg ? (
-                          <BarChart data={avgData} margin={{ top:16, right:8, left:-16, bottom:0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                            <XAxis dataKey="name" tick={{ fill:C.muted, fontSize:10 }} interval={0} />
-                            <YAxis tick={{ fill:C.muted, fontSize:10 }} domain={ch.pct ? [0,100] : [0,"auto"]} unit={ch.pct ? "%" : ""} allowDecimals={false} />
-                            <Tooltip {...tip} formatter={(v) => [ch.pct ? `${v ?? "—"}%` : v, "Mitjana"]} />
-                            <Bar dataKey="val" radius={[4,4,0,0]}>
-                              {avgData.map((d,i) => <Cell key={i} fill={d.color} />)}
-                              <LabelList dataKey="val" position="top" fill={C.text} fontSize={10} formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
-                            </Bar>
-                          </BarChart>
-                        ) : (
-                          <BarChart data={rows} margin={{ top:16, right:8, left:-16, bottom:0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                            <XAxis dataKey="label" tick={{ fill:C.muted, fontSize:10 }} />
-                            <YAxis tick={{ fill:C.muted, fontSize:10 }} domain={ch.pct ? [0,100] : [0,"auto"]} unit={ch.pct ? "%" : ""} allowDecimals={false} />
-                            <Tooltip {...tip} labelFormatter={(l) => { const d = rows.find(r => r.label === l); return d?.rival ? `${l} — ${d.rival}` : l; }}
-                              formatter={(v, name) => [ch.pct ? `${v ?? "—"}%` : v, name]} />
-                            <Legend wrapperStyle={{ fontSize:"11px", color:C.muted }} />
-                            {ch.series.map(s => <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]} />)}
-                          </BarChart>
-                        )}
-                      </ResponsiveContainer>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* ── EVOLUCIÓ PER JORNADA (només quan hi ha jugador seleccionat) ── */}
         {filtreJugador !== "Tots" && evoJugador.length > 0 && (() => {
