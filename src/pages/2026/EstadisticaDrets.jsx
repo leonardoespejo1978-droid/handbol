@@ -5,7 +5,7 @@ export default function EstadisticaDrets() {
     <Estadistica
       arxiu="LLIGA DRETS FEDERATIUS INFANTIL MASCULI 25_26"
       titol="Estadístiques — Drets Federatius"
-      subtitol="Infantil Masculí · Temporada 25/26"
+      subtitol="Cadet B · Temporada 26/27"
       temporada="2026"
     />
   );

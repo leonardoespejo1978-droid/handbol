@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
@@ -67,6 +69,12 @@ export default function Estadistica({
   const [ordenDesc, setOrdenDesc] = useState(true);
   const [vistaMedia, setVistaMedia] = useState(false);
   const [resumMode, setResumMode] = useState("totals"); // "totals" | "mitjanes"
+  const [generantInforme, setGenerantInforme] = useState(false);
+  const informeRef = useRef(null);
+  const radarRef = useRef(null);
+  const [resumModeEquip, setResumModeEquip] = useState("totals"); // "totals" | "mitjanes"
+  const [generantInformeEquip, setGenerantInformeEquip] = useState(false);
+  const informeEquipRef = useRef(null);
   const [filtreGraficPorter, setFiltreGraficPorter] = useState("Parades/Lançaments");
   const [grafEvoCamp, setGrafEvoCamp] = useState("Gols/Lançaments");
   const [grafEvoMode, setGrafEvoMode] = useState("partit"); // "partit" | "acumulat"
@@ -450,6 +458,222 @@ export default function Estadistica({
     return { isPorter, rows, n, avg, mitjanes };
   }, [filtreJugador, rawData]);
 
+  // Genera un PDF de dues pàgines amb el resum estadístic del jugador/porter filtrat
+  const generarInformePDF = async () => {
+    if (!informeRef.current || generantInforme) return;
+    setGenerantInforme(true);
+    const modeOriginal = resumMode;
+    try {
+      const waitRender = () => new Promise(res =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(res, 60))));
+
+      const capturaGrid = async (mode) => {
+        setResumMode(mode);
+        await waitRender();
+        return html2canvas(informeRef.current, { scale: 2, backgroundColor: C.card, useCORS: true });
+      };
+
+      const canvasTotals   = await capturaGrid("totals");
+      const canvasMitjanes = await capturaGrid("mitjanes");
+      const canvasRadar    = radarRef.current
+        ? await html2canvas(radarRef.current, { scale: 2, backgroundColor: C.card, useCORS: true })
+        : null;
+
+      setResumMode(modeOriginal);
+
+      // Dades estructurades equivalents a la fila de "Rànquing jugadors" / "Rànquing porters"
+      const isPorter = resumJugador?.isPorter;
+      const buildStatsResum = (usarMitjanes) => {
+        let row, idx, total;
+        if (isPorter) {
+          const sorted = [...statsPerPorter].sort((a, b) => b.eficiencia - a.eficiencia);
+          idx = sorted.findIndex(r => r.Jugador === filtreJugador);
+          row = sorted[idx]; total = sorted.length;
+        } else {
+          idx = statsSorted.findIndex(r => r.Jugador === filtreJugador);
+          row = statsSorted[idx]; total = statsSorted.length;
+        }
+        if (!row) return null;
+        const pick = (totalKey, avgKey) => usarMitjanes ? row[avgKey] : row[totalKey];
+        const base = { rank: idx + 1, total, pj: row.partitsJugats, pjTotal: row.partits };
+        if (isPorter) {
+          return {
+            ...base,
+            groups: [
+              { label: "JOC",   v1Lbl: "Parades", v1: pick("ParadasJoc", "avgParadesJoc"), v2Lbl: "Llanç.", v2: pick("Lanzam.", "avgLanzRebJoc"), efic: row.eficienciaJoc },
+              { label: "7M",    v1Lbl: "Parades", v1: pick("Paradas7m", "avgParades7m"),   v2Lbl: "Llanç.", v2: pick("Lanzam7m", "avgLanzReb7m"), efic: row.eficiencia7m },
+              { label: "TOTAL", v1Lbl: "Parades", v1: pick("Paradas", "avgParades"),       v2Lbl: "Llanç.", v2: pick("LanzamTot", "avgLanzReb"),  efic: row.eficiencia },
+            ],
+            secundaris: [
+              { label: "Gols encaixats", val: pick("GC", "avgGC") },
+              { label: "Assistències",   val: pick("Asistencia", "avgAss") },
+              { label: "Pèrd. Passe",    val: pick("Pase", "avgPase") },
+            ],
+          };
+        }
+        return {
+          ...base,
+          groups: [
+            { label: "JOC",   v1Lbl: "Gols", v1: pick("Goles", "avgGoles"),       v2Lbl: "Llanç.", v2: pick("Lanzam.", "avgLanzam"),     efic: row.eficienciaJoc },
+            { label: "7M",    v1Lbl: "Gols", v1: pick("Goles7m", "avgGoles7m"),   v2Lbl: "Llanç.", v2: pick("Lanzam7m", "avgLanzam7m"),  efic: row.eficiencia7m },
+            { label: "TOTAL", v1Lbl: "Gols", v1: pick("GolesTot", "avgGolesTot"), v2Lbl: "Llanç.", v2: pick("LanzamTot", "avgLanzamTot"), efic: row.eficiencia },
+          ],
+          secundaris: [
+            { label: "Assistències",   val: pick("Asistencia", "avgAsistencia") },
+            { label: "Recuperacions",  val: pick("Recup.", "avgRecup") },
+            { label: "Exclusions",     val: pick("Exclusión", "avgExclusion") },
+            { label: "Penal. provocat",val: pick("PenaltiProvocado", "avgPenalti") },
+          ],
+        };
+      };
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+
+      // "Estadístiques — Drets Federatius" -> "Estadístiques-Drets Federatius"
+      const titolNet = (titol || "Estadístiques").replace(/\s*—\s*/g, "-");
+      // "Infantil Masculí · Temporada 25/26" -> "Infantil Masculí. Temporada 25/26"
+      const subtitolNet = (subtitol || "").replace(/\s*·\s*/g, ". ");
+      const dataGenerat = new Date().toLocaleDateString("ca-ES");
+
+      const eficColor = (v) => v >= 70 ? C.positive : v >= 50 ? C.warning : C.negative;
+
+      // Dibuixa la franja de rànquing com a targetes (rang, JOC/7M/TOTAL, secundaris) en lloc de text pla
+      const drawStatsStrip = (y0, statsResum) => {
+        if (!statsResum) return y0;
+        const fullW = pageW - margin * 2;
+        const gap = 4;
+
+        // -- Fila A: targeta de rànquing + 3 targetes JOC / 7M / TOTAL --
+        const rowAH = 20;
+        const rankW = 30;
+        const groupW = (fullW - rankW - gap * 4) / 3;
+        let x = margin;
+
+        // Targeta de jornades jugades
+        pdf.setFillColor(C.border);
+        pdf.roundedRect(x, y0, rankW, rowAH, 2, 2, "F");
+        pdf.setTextColor("#ffffff");
+        pdf.setFontSize(16);
+        pdf.setFont(undefined, "bold");
+        pdf.text(`${statsResum.pj}`, x + rankW / 2, y0 + 9, { align: "center" });
+        pdf.setFont(undefined, "normal");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(C.muted);
+        pdf.text("jornades jugades", x + rankW / 2, y0 + 13.5, { align: "center" });
+        pdf.setFontSize(7.5);
+        pdf.setTextColor("#d8dce5");
+        pdf.text(`de ${statsResum.pjTotal} totals`, x + rankW / 2, y0 + 17.8, { align: "center" });
+        x += rankW + gap;
+
+        // Targetes JOC / 7M / TOTAL
+        statsResum.groups.forEach(g => {
+          pdf.setFillColor(C.border);
+          pdf.roundedRect(x, y0, groupW, rowAH, 2, 2, "F");
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(C.muted);
+          pdf.text(g.label, x + 3, y0 + 5);
+
+          pdf.setFontSize(8.5);
+          pdf.setTextColor("#d8dce5");
+          const valsTxt = g.v2Lbl != null
+            ? `${g.v1Lbl} ${g.v1}   ${g.v2Lbl} ${g.v2}`
+            : `${g.v1Lbl} ${g.v1}`;
+          pdf.text(valsTxt, x + 3, y0 + 11.5);
+
+          const efCol = eficColor(g.efic);
+          pdf.setFillColor(efCol);
+          pdf.roundedRect(x + groupW - 20, y0 + rowAH - 9, 17, 6.5, 1.5, 1.5, "F");
+          pdf.setFontSize(8);
+          pdf.setTextColor("#12141c");
+          pdf.setFont(undefined, "bold");
+          pdf.text(`${g.efic}%`, x + groupW - 11.5, y0 + rowAH - 4.5, { align: "center" });
+          pdf.setFont(undefined, "normal");
+
+          x += groupW + gap;
+        });
+
+        // -- Fila B: estadístiques secundàries, com a xips petits --
+        const y1 = y0 + rowAH + 5;
+        pdf.setFontSize(8);
+        let xs = margin;
+        statsResum.secundaris.forEach(s => {
+          pdf.setTextColor(C.muted);
+          pdf.text(`${s.label}`, xs, y1);
+          const lblW = pdf.getTextWidth(`${s.label} `);
+          pdf.setTextColor("#d8dce5");
+          pdf.setFont(undefined, "bold");
+          pdf.text(`${s.val}`, xs + lblW, y1);
+          pdf.setFont(undefined, "normal");
+          xs += lblW + pdf.getTextWidth(`${s.val}`) + 10;
+        });
+
+        return y1 + 4;
+      };
+
+      const drawHeader = (modeLabel, usarMitjanes, mostrarStats) => {
+        pdf.setFillColor("#0f141e");
+        pdf.rect(0, 0, pageW, pageH, "F");
+        pdf.setTextColor("#ffffff");
+        pdf.setFont(undefined, "bold");
+        pdf.setFontSize(16);
+        pdf.text(`${titolNet}_${filtreJugador}`, margin, margin + 4);
+        pdf.setFont(undefined, "normal");
+        pdf.setFontSize(9.5);
+        pdf.setTextColor("#9aa4b5");
+        pdf.text(`${subtitolNet}${subtitolNet ? ". " : ""}${modeLabel}. Generat ${dataGenerat}`, margin, margin + 10);
+
+        let yEnd = margin + 13;
+        if (mostrarStats) {
+          const statsResum = buildStatsResum(usarMitjanes);
+          yEnd = drawStatsStrip(margin + 14, statsResum);
+        }
+
+        pdf.setDrawColor(C.border);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, yEnd, pageW - margin, yEnd);
+
+        return yEnd - 0 + 3;
+      };
+
+      const fitInto = (canvas, x, y, w, h) => {
+        const ratio = canvas.width / canvas.height;
+        let dw = w, dh = dw / ratio;
+        if (dh > h) { dh = h; dw = dh * ratio; }
+        const ix = x + (w - dw) / 2, iy = y + (h - dh) / 2;
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", ix, iy, dw, dh);
+      };
+
+      // Pàgina 1: gràfiques per jornada (totals)
+      let hH = drawHeader("Resum per jornada", false, true);
+      fitInto(canvasTotals, margin, hH, pageW - margin * 2, pageH - margin - hH);
+
+      // Pàgina 2: mitjanes de temporada + radars d'accions
+      pdf.addPage();
+      hH = drawHeader("Mitjanes de la temporada", true, false);
+      const availW = pageW - margin * 2;
+      const availH = pageH - margin - hH;
+      if (canvasRadar) {
+        const hMitjanes = availH * 0.56;
+        const hRadar = availH - hMitjanes - 4;
+        fitInto(canvasMitjanes, margin, hH, availW, hMitjanes);
+        fitInto(canvasRadar, margin, hH + hMitjanes + 4, availW, hRadar);
+      } else {
+        fitInto(canvasMitjanes, margin, hH, availW, availH);
+      }
+
+      pdf.save(`Informe_${filtreJugador.replace(/\s+/g, "_")}.pdf`);
+    } catch (err) {
+      console.error("Error generant l'informe PDF:", err);
+      alert("No s'ha pogut generar l'informe PDF. Torna-ho a provar.");
+    } finally {
+      setResumMode(modeOriginal);
+      setGenerantInforme(false);
+    }
+  };
+
   const statsEquipPerJornada = useMemo(() => {
     const jornadesList = Array.from(new Set(rawData.map(r => r.JORNADA))).filter(Boolean).sort((a,b)=>a-b);
     return jornadesList.map(j => {
@@ -501,6 +725,120 @@ export default function Estadistica({
       };
     });
   }, [rawData]);
+
+  // Resum estadístic de l'equip (totes les jornades), per al bloc de gràfiques i l'informe PDF
+  const resumEquip = useMemo(() => {
+    const rows = statsEquipPerJornada.map(r => ({ ...r, label: r.jornada }));
+    const n = rows.length;
+    const tot = k => rows.reduce((a, r) => a + (r[k] || 0), 0);
+    const avg = k => (n ? +(tot(k) / n).toFixed(1) : 0);
+    const pct = (g, l) => (l > 0 ? Math.round((g / l) * 100) : 0);
+    const mitjanes = {
+      efic:        pct(tot("gf"), tot("lanz")),
+      eficJoc:     pct(tot("gfJoc"), tot("lanzJoc")),
+      efic7m:      pct(tot("gf7m"), tot("lanz7m")),
+      eficPort:    pct(tot("parades"), tot("lanzRebuts")),
+      eficPortJoc: pct(tot("paradesJoc"), tot("lanzRebutsJoc")),
+      eficPort7m:  pct(tot("parades7m"), tot("lanzRebuts7m")),
+    };
+    return { rows, n, tot, avg, mitjanes };
+  }, [statsEquipPerJornada]);
+
+  // Genera un PDF de dues pàgines (totals / mitjanes) amb el resum estadístic de tot l'equip
+  const generarInformeEquipPDF = async () => {
+    if (!informeEquipRef.current || generantInformeEquip) return;
+    setGenerantInformeEquip(true);
+    const modeOriginal = resumModeEquip;
+    try {
+      const waitRender = () => new Promise(res =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(res, 60))));
+
+      const capturaGrid = async (mode) => {
+        setResumModeEquip(mode);
+        await waitRender();
+        return html2canvas(informeEquipRef.current, { scale: 2, backgroundColor: C.card, useCORS: true });
+      };
+
+      const canvasTotals   = await capturaGrid("totals");
+      const canvasMitjanes = await capturaGrid("mitjanes");
+      setResumModeEquip(modeOriginal);
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+
+      const titolNet = (titol || "Estadístiques").replace(/\s*—\s*/g, "-");
+      const subtitolNet = (subtitol || "").replace(/\s*·\s*/g, ". ");
+      const dataGenerat = new Date().toLocaleDateString("ca-ES");
+
+      // Franja amb els grans totals de la temporada (mateixos valors que les targetes KPI de l'equip)
+      const chipsTotals = [
+        { label: "Jornades",          val: resumEquip.n },
+        { label: "Gols a favor",      val: resumEquip.tot("gf") },
+        { label: "Gols en contra",    val: resumEquip.tot("gc") },
+        { label: "Eficiència atac",   val: `${resumEquip.mitjanes.efic}%` },
+        { label: "Eficiència porteria", val: `${resumEquip.mitjanes.eficPort}%` },
+      ];
+
+      const drawHeader = (modeLabel) => {
+        pdf.setFillColor("#0f141e");
+        pdf.rect(0, 0, pageW, pageH, "F");
+        pdf.setTextColor("#ffffff");
+        pdf.setFont(undefined, "bold");
+        pdf.setFontSize(16);
+        pdf.text(`${titolNet}_Equip`, margin, margin + 4);
+        pdf.setFont(undefined, "normal");
+        pdf.setFontSize(9.5);
+        pdf.setTextColor("#9aa4b5");
+        pdf.text(`${subtitolNet}${subtitolNet ? ". " : ""}${modeLabel}. Generat ${dataGenerat}`, margin, margin + 10);
+
+        // Xips amb els totals de temporada
+        let x = margin;
+        const y = margin + 16;
+        pdf.setFontSize(8);
+        chipsTotals.forEach(c => {
+          pdf.setTextColor(C.muted);
+          pdf.text(`${c.label}`, x, y);
+          const lblW = pdf.getTextWidth(`${c.label} `);
+          pdf.setTextColor("#d8dce5");
+          pdf.setFont(undefined, "bold");
+          pdf.text(`${c.val}`, x + lblW, y);
+          pdf.setFont(undefined, "normal");
+          x += lblW + pdf.getTextWidth(`${c.val}`) + 12;
+        });
+
+        const yEnd = y + 3;
+        pdf.setDrawColor(C.border);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, yEnd, pageW - margin, yEnd);
+        return yEnd + 3;
+      };
+
+      const fitInto = (canvas, x, y, w, h) => {
+        const ratio = canvas.width / canvas.height;
+        let dw = w, dh = dw / ratio;
+        if (dh > h) { dh = h; dw = dh * ratio; }
+        const ix = x + (w - dw) / 2, iy = y + (h - dh) / 2;
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", ix, iy, dw, dh);
+      };
+
+      let hH = drawHeader("Resum per jornada");
+      fitInto(canvasTotals, margin, hH, pageW - margin * 2, pageH - margin - hH);
+
+      pdf.addPage();
+      hH = drawHeader("Mitjanes de la temporada");
+      fitInto(canvasMitjanes, margin, hH, pageW - margin * 2, pageH - margin - hH);
+
+      pdf.save(`Informe_Equip_${(subtitol || "temporada").replace(/\s+/g, "_")}.pdf`);
+    } catch (err) {
+      console.error("Error generant l'informe PDF de l'equip:", err);
+      alert("No s'ha pogut generar l'informe PDF. Torna-ho a provar.");
+    } finally {
+      setResumModeEquip(modeOriginal);
+      setGenerantInformeEquip(false);
+    }
+  };
 
   const kpis = useMemo(() => {
     const isPorter = filtreJugador !== "Tots" && getPosicion(filtreJugador) === "PORTERO";
@@ -762,14 +1100,19 @@ export default function Estadistica({
                     {isAvg ? `(mitjana per partit · ${n} partits jugats)` : "(per jornada)"}
                   </span>
                 </div>
-                <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
-                  {[["totals","Totals"],["mitjanes","Mitjanes"]].map(([val,lbl]) => (
-                    <button key={val} onClick={() => setResumMode(val)} style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor:"pointer", fontSize:"11px", fontWeight:600, background: resumMode===val ? C.accent : "transparent", color: resumMode===val ? "#fff" : C.muted, transition:"all .2s" }}>{lbl}</button>
-                  ))}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", alignItems:"center" }}>
+                  <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
+                    {[["totals","Totals"],["mitjanes","Mitjanes"]].map(([val,lbl]) => (
+                      <button key={val} onClick={() => setResumMode(val)} disabled={generantInforme} style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor: generantInforme ? "wait" : "pointer", fontSize:"11px", fontWeight:600, background: resumMode===val ? C.accent : "transparent", color: resumMode===val ? "#fff" : C.muted, transition:"all .2s", opacity: generantInforme ? 0.6 : 1 }}>{lbl}</button>
+                    ))}
+                  </div>
+                  <button onClick={generarInformePDF} disabled={generantInforme} style={{ padding:"6px 14px", borderRadius:"8px", border:`1px solid ${C.border}`, cursor: generantInforme ? "wait" : "pointer", fontSize:"11px", fontWeight:600, background: C.accent2, color:"#fff", opacity: generantInforme ? 0.6 : 1, transition:"all .2s" }}>
+                    {generantInforme ? "⏳ Generant…" : "📄 Informe PDF"}
+                  </button>
                 </div>
               </div>
 
-              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:"14px" }}>
+              <div ref={informeRef} style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:"14px" }}>
                 {charts.map(ch => {
                   const avgData = ch.series.map(s => ({
                     name: s.name, color: s.color,
@@ -902,7 +1245,7 @@ export default function Estadistica({
         {/* Radar positiu + negatiu — costat a costat en desktop, columna en mòbil */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           {filtreJugador !== "Tots" && (radarData.length > 0 || radarDataNegatiu.length > 0) && (
-            <div style={{ display: "flex", gap: "14px", flexDirection: isMobile ? "column" : "row" }}>
+            <div ref={radarRef} style={{ display: "flex", gap: "14px", flexDirection: isMobile ? "column" : "row" }}>
               {radarData.length > 0 && (
                 <div style={{ ...S.card, flex: 1, marginBottom: 0 }}>
                   <div style={S.cardT}>⬆ Accions positives — {filtreJugador}</div>
@@ -1396,6 +1739,108 @@ export default function Estadistica({
                 </div>
               </div>
             )}
+
+            {/* ── RESUM ESTADÍSTIC DE L'EQUIP: 6 gràfiques ── */}
+            {resumEquip.n > 0 && (() => {
+              const isAvg = resumModeEquip === "mitjanes";
+              const { rows, avg, mitjanes } = resumEquip;
+
+              const charts = [
+                { title: "⚽ Gols a favor / Llançaments",
+                  series: [{ name:"Gols", key:"gf", color:C.accent3 }, { name:"Llançaments", key:"lanz", color:C.accent2 }] },
+                { title: "📊 Eficiència d'atac", pct:true,
+                  series: [{ name:"Joc", key:"eficJoc", color:C.accent2, avgPct:mitjanes.eficJoc },
+                           { name:"7m",  key:"efic7m",  color:C.warning, avgPct:mitjanes.efic7m },
+                           { name:"Total", key:"efic",  color:C.accent3, avgPct:mitjanes.efic }] },
+                { title: "🥅 Porteria: rebuts / encaixats / parades",
+                  series: [{ name:"Llanç. rebuts", key:"lanzRebuts", color:C.accent2 },
+                           { name:"Gols encaixats", key:"gc", color:C.negative },
+                           { name:"Parades", key:"parades", color:C.positive }] },
+                { title: "📊 Eficiència de porteria", pct:true,
+                  series: [{ name:"Joc", key:"eficPortJoc", color:C.accent2, avgPct:mitjanes.eficPortJoc },
+                           { name:"7m",  key:"eficPort7m",  color:C.warning, avgPct:mitjanes.eficPort7m },
+                           { name:"Total", key:"eficPort",  color:C.accent3, avgPct:mitjanes.eficPort }] },
+                { title: "⬆ Accions positives",
+                  series: [{ name:"Assistències", key:"assistencies", color:C.accent3 },
+                           { name:"Recuperacions", key:"recuperacions", color:C.accent2 },
+                           { name:"Exclusions +", key:"exclusionsPos", color:C.warning },
+                           { name:"Penal. provocat", key:"penaltisProvocats", color:"#f4a261" }] },
+                { title: "⬇ Accions negatives",
+                  series: [{ name:"Pèrd. Passe", key:"perdaPasse", color:C.negative },
+                           { name:"Passos", key:"passos", color:C.accent2 },
+                           { name:"Pèrd. Àrea", key:"area", color:C.warning },
+                           { name:"Exclusions", key:"exclusions", color:"#f4a261" },
+                           { name:"Altres", key:"altres", color:C.muted }] },
+              ];
+
+              const tip = { contentStyle:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, fontSize:"12px" } };
+              const h = isMobile ? 220 : 260;
+
+              return (
+                <div style={S.card}>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", justifyContent:"space-between", alignItems:"center", marginBottom:"14px" }}>
+                    <div style={{ ...S.cardT, marginBottom:0 }}>📋 Resum estadístic — Equip
+                      <span style={{ textTransform:"none", letterSpacing:0, fontWeight:400, marginLeft:"8px" }}>
+                        {isAvg ? `(mitjana per partit · ${resumEquip.n} jornades)` : "(per jornada)"}
+                      </span>
+                    </div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", alignItems:"center" }}>
+                      <div style={{ display:"flex", gap:"3px", background:`${C.border}44`, padding:"3px", borderRadius:"8px" }}>
+                        {[["totals","Totals"],["mitjanes","Mitjanes"]].map(([val,lbl]) => (
+                          <button key={val} onClick={() => setResumModeEquip(val)} disabled={generantInformeEquip} style={{ padding:"4px 14px", borderRadius:"6px", border:"none", cursor: generantInformeEquip ? "wait" : "pointer", fontSize:"11px", fontWeight:600, background: resumModeEquip===val ? C.accent : "transparent", color: resumModeEquip===val ? "#fff" : C.muted, transition:"all .2s", opacity: generantInformeEquip ? 0.6 : 1 }}>{lbl}</button>
+                        ))}
+                      </div>
+                      <button onClick={generarInformeEquipPDF} disabled={generantInformeEquip} style={{ padding:"6px 14px", borderRadius:"8px", border:`1px solid ${C.border}`, cursor: generantInformeEquip ? "wait" : "pointer", fontSize:"11px", fontWeight:600, background: C.accent2, color:"#fff", opacity: generantInformeEquip ? 0.6 : 1, transition:"all .2s" }}>
+                        {generantInformeEquip ? "⏳ Generant…" : "📄 Informe PDF Equip"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div ref={informeEquipRef} style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:"14px" }}>
+                    {charts.map(ch => {
+                      const avgData = ch.series.map(s => ({
+                        name: s.name, color: s.color,
+                        val: ch.pct ? s.avgPct : avg(s.key),
+                      }));
+                      return (
+                        <div key={ch.title} style={{ background:`${C.border}22`, border:`1px solid ${C.border}`, borderRadius:"10px", padding:"12px" }}>
+                          <div style={{ ...S.cardT, marginBottom:"8px" }}>{ch.title}</div>
+                          <ResponsiveContainer width="100%" height={h}>
+                            {isAvg ? (
+                              <BarChart data={avgData} margin={{ top:16, right:8, left:-16, bottom:0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                                <XAxis dataKey="name" tick={{ fill:C.muted, fontSize:10 }} interval={0} />
+                                <YAxis tick={{ fill:C.muted, fontSize:10 }} domain={ch.pct ? [0,100] : [0,"auto"]} unit={ch.pct ? "%" : ""} allowDecimals={false} />
+                                <Tooltip {...tip} formatter={(v) => [ch.pct ? `${v ?? "—"}%` : v, "Mitjana"]} />
+                                <Bar dataKey="val" radius={[4,4,0,0]} isAnimationActive={false}>
+                                  {avgData.map((d,i) => <Cell key={i} fill={d.color} />)}
+                                  <LabelList dataKey="val" position="top" fill={C.text} fontSize={10} formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
+                                </Bar>
+                              </BarChart>
+                            ) : (
+                              <BarChart data={rows} margin={{ top:16, right:8, left:-16, bottom:0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                                <XAxis dataKey="label" tick={{ fill:C.muted, fontSize:10 }} />
+                                <YAxis tick={{ fill:C.muted, fontSize:10 }} domain={ch.pct ? [0,100] : [0,"auto"]} unit={ch.pct ? "%" : ""} allowDecimals={false} />
+                                <Tooltip {...tip} labelFormatter={(l) => { const d = rows.find(r => r.label === l); return d?.rival ? `${l} — ${d.rival}` : l; }}
+                                  formatter={(v, name) => [ch.pct ? `${v ?? "—"}%` : v, name]} />
+                                <Legend wrapperStyle={{ fontSize:"11px", color:C.muted }} />
+                                {ch.series.map(s => (
+                                  <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color} radius={[3,3,0,0]} isAnimationActive={false}>
+                                    <LabelList dataKey={s.key} position="top" fill={C.text} fontSize={ch.series.length > 3 ? 8 : 10}
+                                      formatter={v => v == null ? "" : ch.pct ? `${v}%` : v} />
+                                  </Bar>
+                                ))}
+                              </BarChart>
+                            )}
+                          </ResponsiveContainer>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div style={S.card}>
               <div style={S.cardT}>Evolució per jornades</div>

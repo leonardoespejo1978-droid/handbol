@@ -57,6 +57,10 @@
   color: var(--fcb-gold);
   font-family: 'Barlow', sans-serif;
 }
+/* Fondo temporada 26/27 */
+.home.home-2627 {
+  background: url('/fondo26_27.jpg') center center / cover no-repeat;
+}
 
 .home-center-text {
   position: absolute;
