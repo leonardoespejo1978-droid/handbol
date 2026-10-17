@@ -9,6 +9,7 @@ export default function Videos() {
     { image: "/assets/J1_DRETS_26_27.jpg",  text: "Jornada 1\nFCB-BM GRANOLLERS B",  url: "https://next.nubeespesan.duckdns.org/s/xCMJDC7jTKgwE6m" },
     { image: "/assets/J2_DRETS_26_27.jpg",  text: "Jornada 2\nH. SANT CUGAT A-FCB",  url: "https://next.nubeespesan.duckdns.org/s/eSFWjRn9P9WRqfo" },
     { image: "/assets/J3_DRETS_26_27.jpg",  text: "Jornada 3\nFCB-BM GRANOLLERS A",  url: "https://next.nubeespesan.duckdns.org/s/Sa4PRfLKCWrmoiQ" },
+    { image: "/assets/J4_DRETS_26_27.jpg",  text: "Jornada 4\nFCH RIBES-FCB",  url: "https://next.nubeespesan.duckdns.org/s/GpoCBSo5Ao2XzBd" },
 
   ];
 
