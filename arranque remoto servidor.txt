@@ -1,0 +1,3 @@
+desde la consola del portátil:
+C:\>ssh espesan@192.168.1.100
+password:Lel@lule1993
